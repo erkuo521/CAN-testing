@@ -245,7 +245,31 @@ class aceinna_test_case():
         time.sleep(1)
         return addr_in
 
-       
+    # def verify_addr_saved_uart(self, target_data): #1.6-1.7 0x87
+    #     if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+    #     # get current address saved in EEPROM
+    #     addr_list = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
+    #     original = int(addr_list[-4:], 16)
+    #     #change addr and saved
+    #     self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+    #     time.sleep(0.2)
+    #     self.dev.set_cmd('save_config', [2]) # save and power reset
+    #     time.sleep(2)
+    #     #check new value by uart
+    #     addr_newlist = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
+    #     new = int(addr_newlist[-4:], 16)
+
+    #     self.function_measure_data[sys._getframe().f_code.co_name] = new
+
+    #     # back to original address
+    #     self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+    #     self.dev.driver.send_can_msg(0x18FF5900, [new, 2, 0, original])
+    #     time.sleep(0.2)
+    #     self.dev.driver.send_can_msg(0x18FF5100, [2, new]) # save and power reset
+    #     time.sleep(2)
+
+    #     return new == int(target_data, 16)
+        
     # 1.6 - 2.3 need to be realized
 
     def test_pkt_rate(self, target_data): # 3.1 4.1.2

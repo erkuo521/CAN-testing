@@ -38,8 +38,7 @@ class aceinna_device():
         self.set_feedback_payload = []
 
         self.init_data_list()
-        self.init_default_confi()
-        
+        self.init_default_confi()        
 
     def add_driver(self, driver_instance):
         self.driver = driver_instance
@@ -87,7 +86,7 @@ class aceinna_device():
             k = None
         time.sleep(0.2)
 
-    def get_pdu_msg(self, msg_input):
+    def get_pdu_msg(self, msg_input): # CAN msg
         if msg_input['src'] == self.src:    
             self.put_msg(msg_input.copy())
         else:
@@ -321,6 +320,15 @@ class aceinna_device():
         list2 = [over_range, dyna_motion, uncorr_rate, swap_rateXY, autobaud_dete, can_term_resistor]
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':list2})
         return list2
+
+    # def send_get_uart_msg(self, request_data):
+    #     '''
+    #     such as, request_data= [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]
+    #     request CAN address which saved in EEPROM
+    #     '''
+    #     strlist = self.driver.send_get_uart_msg(request_data)
+    #     return strlist
+        
 
     def calc_ssi2(self,msg):   
         '''

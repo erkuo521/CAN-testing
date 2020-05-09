@@ -112,11 +112,13 @@ class aceinna_driver():
         pdu_dict["payload"] = ''.join(msg_list[4:])        
         return pdu_dict    
 
-    # def send_get_uart_msg(self, data):        
+    # def send_get_uart_msg(self, data):         
     #     get_value = []
-    #     while len(get_value) == 0:
-    #         self.uart.send_msg(data=[0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x3a, 0x2d, 0xf2])  
-    #         get_value = self.uart.get_msg()
-    #         time.sleep(0.5)    
+        # for i in range(5):
+        #     self.uart.send_msg(data)  
+        #     get_value = self.uart.get_msg()
+        #     if len(get_value) != 0:
+        #         break
+        #     time.sleep(0.5)    
 
     #     return get_value

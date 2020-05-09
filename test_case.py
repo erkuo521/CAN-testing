@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import datetime
 from device import aceinna_device # need to be delete
 
 class aceinna_test_case():
@@ -209,6 +210,7 @@ class aceinna_test_case():
         self.test_case.append(['5.9.7', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.8', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.9', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])       
+        # self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
 
     def test_ecu_id(self, target_data): # 1.1, 1.2, 3.8 4.1.6
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -908,10 +910,45 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = ps1_set_ok
         return ps1_set_ok
 
+    def test_save_file(self, target_data): # 6
+        '''
+        if not find all zero in payload, True will feedback
+        '''
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        self.dev.set_cmd('set_pkt_type', [0x1F])
+        time.sleep(0.2)
+        self.dev.set_cmd('set_pkt_rate', [1])
+        time.sleep(0.2)
+        start_time = time.time()
+        date_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+        file_path = os.path.join(os.getcwd(), 'data',
+                            'can_data_{0:#X}_{1:#X}_{2}.txt'.format(self.dev.src, self.dev.sn_can, date_time))
+        f = open(file_path, 'w+')
+        print('start save data to file in 200s, pls wait, starting time:{0}'.format(date_time))
+        all_zero = False
+        while (time.time() - start_time) < 100: # recording 200s data
+            for idx,item in enumerate(self.dev.auto_msg_queue):
+                self.dev.auto_msg_queue_lock[idx].acquire()
+                if item.empty():
+                    self.dev.auto_msg_queue_lock[idx].release()      
+                    time.sleep(0.001) 
+                else:
+                    msg_dict = item.get()
+                    self.dev.auto_msg_queue_lock[idx].release() 
+                    if int(msg_dict['payload'], 16) == 0:
+                        all_zero = True 
+                    f.write(str(msg_dict))
+            f.flush() # write to internal buffer, when full it will write to file by call()
+            os.fsync(f) # force write to file now
+        print('finished save data file: {0}'.format(file_path))
+        self.function_measure_data[sys._getframe().f_code.co_name] = all_zero
+        return all_zero
+
+
+
+
 
 '''
-
-
 # feedback = self.save_confi_msg_queue.get()['payload']
 # fb_type = int(feedback[:2], 16)
 # fb_result = int(feedback[-2:], 16)                

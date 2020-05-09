@@ -1,0 +1,398 @@
+'''
+version 1.1.0 in Aceinna
+mtlt products(MTLT305D and 300RI included now) CAN Bus read and send message module
+Requires PI3B and CAN_HAT(shopping link: https://m.tb.cn/h.eRtgNe2)
+with H/L of CAN_HAT connected with H/L from sensor side
+follow http://www.waveshare.net/wiki/RS485_CAN_HAT 
+or follow blog at http://skpang.co.uk/blog/archives/1220
+only store the angle, acc, rate to can_data.txt
+running in hardbyte-python-can foler, downloaded from https://bitbucket.org/hardbyte/python-can/get/4085cffd2519.zip
+@author: cek
+'''
+
+import os
+import sys
+import can
+import time
+import struct
+import threading
+import subprocess
+import json
+
+from queue import Queue #only python3 supported now
+from driver import aceinna_driver
+
+class aceinna_device(): 
+    def __init__(self, source_address, attribute_json, debug_mode = False):
+        self.src = source_address
+        self.sn_can  = None
+        self.default_confi = {}
+        self.req_ext_id_templete = 0x18EAFF00
+        self.can_attribute = attribute_json['configuration']['can']
+        self.driver = None
+        self.debug = debug_mode
+
+        self.auto_msg_queue = []
+        self.auto_msg_queue_lock = []
+        self.req_feedback_payload = []
+        self.set_feedback_payload = []
+
+        self.init_data_list()
+        self.init_default_confi()
+        
+
+    def add_driver(self, driver_instance):
+        self.driver = driver_instance
+
+    def update_sn(self):
+        ecu_id_payload = self.request_cmd(cmd_name = 'ecu_id')
+        # if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':ecu_id_payload})
+        high_16bits_value = int(ecu_id_payload[-2:] + ecu_id_payload[-4:-2], 16) << 5
+        low_5bits_value = int(ecu_id_payload[-6:-4], 16) >> 3
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':ecu_id_payload})
+
+        self.sn_can = high_16bits_value + low_5bits_value  # it is the last 5 figures in whole hex_sn.
+    
+    def init_default_confi(self):
+        self.default_confi['pkt_rate'] = 1
+        self.default_confi['pkt_type'] = 7
+        self.default_confi['lpf_filter'] = [25, 5] # lpf_rate, lpf_acc
+        self.default_confi['orientation'] = 0
+        self.default_confi['unit_behavior'] = 2
+        self.default_confi['bank_ps0'] = [0x50, 0x00, 0x52, 0x53, 0x54, 0x6C]
+        self.default_confi['bank_ps1'] = [0x55, 0x56, 0x57, 0x58]
+
+    def init_data_list(self):
+        auto_list = [x for x in self.can_attribute if x['type'] == 'auto']
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':auto_list})
+
+        request_list = [x for x in self.can_attribute if (x['type'] == 'request')]
+        feedback_list = [x for x in self.can_attribute if (x['type'] == 'feedback')]
+        for i in range(len(auto_list)):
+            self.auto_msg_queue.append(Queue())
+            self.auto_msg_queue_lock.append(threading.Lock())
+        for j in range(len(request_list)):
+            self.req_feedback_payload.append(None)
+        for k in range(len(feedback_list)):
+            self.set_feedback_payload.append(None)
+    
+    def empty_data_pkt(self):
+        for idx,item in enumerate(self.auto_msg_queue):
+            self.auto_msg_queue_lock[idx].acquire()            
+            item.queue.clear()
+            self.auto_msg_queue_lock[idx].release() 
+        for j in self.req_feedback_payload:
+            j = None
+        for k in self.set_feedback_payload:
+            k = None
+        time.sleep(0.2)
+
+    def get_pdu_msg(self, msg_input):
+        if msg_input['src'] == self.src:    
+            self.put_msg(msg_input.copy())
+        else:
+            pass  # to be added
+
+    # def get_unknow_json_item(self, type):
+    #     pgn_list = [x for x in self.can_attribute if 'pgn' in x]
+    #     pgn_des = [x for x in pgn_list if x['pgn'] == 'None'][0]
+
+    #     id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
+    #     id_idx = pgn_des[id_name] 
+    #     return pgn_des, id_name, id_idx
+
+    def put_msg(self, pdu_msg):
+        pgn_list = [x for x in self.can_attribute if 'pgn' in x]
+        pgn_des_list = [x for x in pgn_list if x['pgn'] == pdu_msg['pgn']]
+        pgn_des = pgn_des_list[0] if len(pgn_des_list) else [x for x in pgn_list if x['pgn'] == 'None'][0]        
+
+        id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
+        id_idx = pgn_des[id_name]
+        # if pdu_msg['pgn'] == 0xFF56 and self.debug:
+        #     print(pgn_des, id_name, id_idx)
+        #     print(self.auto_msg_queue[id_idx].qsize())
+        if id_name == 'auto_id':  
+            self.auto_msg_queue_lock[id_idx].acquire()
+            self.auto_msg_queue[id_idx].put(pdu_msg)
+            self.auto_msg_queue_lock[id_idx].release()
+        elif id_name == 'req_id':
+            self.req_feedback_payload[id_idx] = pdu_msg
+        elif 'fb_id' in pgn_des:
+            self.set_feedback_payload[id_idx] = pdu_msg  
+
+    def request_cmd(self, cmd_name):
+        '''
+        send get cmd based on cmd_type, and return feedback
+        cmd_type should in ['fw_version', 'ecu_id', 'hw_bit', 'sw_bit', 'status', 'pkt_rate', 'pkt_type', 'lpf_filter', 'orientation', 'unit_behavior']
+        '''
+        pgn_des = [x for x in self.can_attribute if x['type'] == 'request' and x['name'] == cmd_name][0]
+        if len(pgn_des):
+            cmd_idx = pgn_des['req_id']
+            cmd_pgn = pgn_des['pgn']
+            self.req_feedback_payload[cmd_idx] == None
+            data = [self.src, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
+            for i in range(5):
+                self.driver.send_can_msg(self.req_ext_id_templete | cmd_idx, data)  
+                time.sleep(0.2)          
+                if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':data + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload})            
+                if self.req_feedback_payload[cmd_idx] != None:
+                    return self.req_feedback_payload[cmd_idx]['payload']
+                else:
+                    pass # to be added                 
+            return False 
+        else:
+            return False  
+
+    def new_request_cmd(self, src, new_pgn):
+        '''
+        if new pgn changed and check whether new PGN feedback or not after send new_pgn request
+        return new pgn msg
+        '''
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[src, hex(new_pgn)]})
+        self.empty_data_pkt()
+        time.sleep(2)
+        # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()   
+        data = [src, (new_pgn >> 8) & 0xFF, new_pgn & 0x00FF]   
+        for i in range(5):   
+            self.driver.send_can_msg(self.req_ext_id_templete, data) # data: [80 FF 52]
+            time.sleep(0.2)
+            while True:
+                rlt = self.get_payload_auto('unknow')
+                if rlt == False:
+                    break
+                if rlt['pgn'] == new_pgn:
+                    return rlt['payload']
+        return False
+
+
+    def set_cmd(self, cmd_name, payload_without_src):
+        '''
+        cmd_name: ['save_config', 'algo_rst', 'set_pkt_rate','set_pkt_type', 'set_lpf_filter', 'set_orientation', 'set_unit_behavior', 'set_bank_ps0', 'set_bank_ps1']
+        cmd_name should be in reference list; 
+        payload_without_src must be a ***list***. like [00] for [00, 80(added by program automatically)];
+        for save_config, payload of byte-0: Request or Response or Reset(save and power cycel); 
+        '''
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[cmd_name, payload_without_src]})
+
+        pgn_des = [x for x in self.can_attribute if x['type'] == 'set' and x['name'] == cmd_name][0]
+        ext_id = pgn_des['ext_set_id']
+        if len(pgn_des):    
+            if ext_id in [419385600, 419385344]: # this is for ID 0x18FF5100 and 0x18FF5000
+                payload = payload_without_src + [self.src] 
+                self.driver.send_can_msg(ext_id, payload)
+            elif ext_id in [419426304, 419426560]: # this is for ID 0x18FFF000 and 0x18FFF100
+                payload = payload_without_src
+                self.driver.send_can_msg(ext_id, payload)       
+            else:
+                payload = [self.src] + payload_without_src
+                self.driver.send_can_msg(ext_id, payload) 
+            return True
+        else:
+            pass # to be added
+
+    def new_set_cmd(self, new_ps, data):
+        '''
+        if ps changed by ps0 cmd and check whether new PGN feedback or not after send new_ps set cmd
+        '''
+        templeate_id = 0x18FF5000
+        new_ext_id = (templeate_id & 0xFFFF00FF) + (new_ps << 8)
+        new_pgn = (new_ext_id >> 8) & 0x00FFFF
+        self.empty_data_pkt()        
+        # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()        
+        self.driver.send_can_msg(new_ext_id, data) # 0x18FF6000, [00 80]
+        time.sleep(0.2)
+        while True:
+            rlt = self.get_payload_auto('unknow')
+            if rlt == False:
+                break
+            if rlt['pgn'] == new_pgn:
+                return rlt['payload']
+        return False
+
+    def get_payload_auto(self, auto_name):
+        '''
+        auto_name:'ssi2', 'rate', 'accel', 'addr', 'ssi', 'acc_hr', 'unknow'
+        unknow packets are used for new PGN HR_ACC/request feedback ms/set cmd feedback msg
+        '''
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == auto_name][0]
+        id_idx = pgn_des['auto_id']
+        
+        for i in range(5):
+            self.auto_msg_queue_lock[id_idx].acquire()    
+            if self.auto_msg_queue[id_idx].empty():
+                self.auto_msg_queue_lock[id_idx].release()      
+                time.sleep(0.001)      
+            else:
+                msg = self.auto_msg_queue[id_idx].get()
+                self.auto_msg_queue_lock[id_idx].release()
+                if auto_name == 'unknow':
+                    return msg
+                return msg['payload']        
+        return False
+
+    def set_get_feedback_payload(self, set_fb_name):
+        '''
+        auto_name:'save_config_feedback', 'algo_rst_feedback'
+        set cmd firstly, and then get the feedback. 
+        it include set_cmd too.
+        '''
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        pgn_des = [x for x in self.can_attribute if x['type'] == 'feedback' and x['name'] == set_fb_name][0]
+        id_idx = pgn_des['fb_id']   
+        
+        self.set_feedback_payload[id_idx] = None  
+        for i in range(5): 
+            self.set_cmd(cmd_name = set_fb_name.replace('_feedback',''), payload_without_src = [0]) 
+            time.sleep(0.2)
+            if self.set_feedback_payload[id_idx] != None:
+                return self.set_feedback_payload[id_idx]['payload']    
+            else:
+                pass
+        return False
+
+    def measure_pkt_type(self):
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        payload = self.request_cmd('pkt_type')
+        while payload == False:
+            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                time.sleep(1)
+            payload = self.request_cmd('pkt_type')
+        odr_idx = int(payload[-2:], 16)
+        time.sleep(0.2)
+        self.set_cmd('set_pkt_rate', [1])
+        time.sleep(0.2)
+        slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
+        self.empty_data_pkt()    
+        if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[0].qsize(), 'slope':'slope_exist:'})        
+        time.sleep(2) # wait 1s to receive packets again
+        slope_exist       = 1 if (self.auto_msg_queue[0].qsize() > 0) else 0
+        rate_exist        = 2 if self.auto_msg_queue[1].qsize() > 0 else 0
+        acc_exist         = 4 if self.auto_msg_queue[2].qsize() > 0 else 0
+        angle_ssi_exist   = 8 if self.auto_msg_queue[4].qsize() > 0 else 0
+        hr_acc_exist      = 16 if self.auto_msg_queue[5].qsize() > 0 else 0  
+        list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
+        sumexist = sum(list1)
+        if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[0].qsize(), 'slope':'slope_exist:','m':list1})
+        # eval('print(k,l,m )',{'k':1,'l':'exist','m':2})
+        if sumexist == 0 & self.debug:
+            if self.debug: input('sumexist of pkt_type is o')
+        self.set_cmd('set_pkt_rate', [odr_idx])
+        time.sleep(0.2)
+        return sumexist
+
+    def measure_pkt_rate(self): 
+        ''' 
+        measure ODR, open the recording and set right packet type 
+        measure 5s, calc the received msg
+        ''' 
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        self.set_cmd('set_pkt_type', [7])
+        time.sleep(0.2)
+
+        pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == 'ssi2'][0]
+        id_idx = pgn_des['auto_id']    
+        self.auto_msg_queue_lock[id_idx].acquire()     
+        self.auto_msg_queue[id_idx].queue.clear() 
+        self.auto_msg_queue_lock[id_idx].release() 
+
+        time.sleep(5)
+        # print(self.auto_msg_queue[id_idx].qsize())
+        odr = self.auto_msg_queue[id_idx].qsize()/5 
+        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':odr})
+        return odr    
+
+    def decode_pke_type_num(self, pkt_num):
+        slope_exist       = True if ((pkt_num >> (1-1)) & 1) == 1 else False
+        rate_exist        = True if ((pkt_num >> (2-1)) & 1) == 1 else False
+        acc_exist         = True if ((pkt_num >> (3-1)) & 1) == 1 else False
+        angle_ssi_exist   = True if ((pkt_num >> (4-1)) & 1) == 1 else False
+        acc_hr_exist      = True if ((pkt_num >> (5-1)) & 1) == 1 else False
+        return slope_exist, rate_exist, acc_exist, angle_ssi_exist, acc_hr_exist
+
+    def decode_behavior_num(self, behavior_num):
+        over_range       = ((behavior_num >> (1-1)) & 1)
+        dyna_motion      = ((behavior_num >> (2-1)) & 1)
+        uncorr_rate      = ((behavior_num >> (3-1)) & 1)
+        swap_rateXY      = ((behavior_num >> (4-1)) & 1)
+        autobaud_dete    = ((behavior_num >> (5-1)) & 1)
+        can_term_resistor= ((behavior_num >> (6-1)) & 1)
+
+        list2 = [over_range, dyna_motion, uncorr_rate, swap_rateXY, autobaud_dete, can_term_resistor]
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':list2})
+        return list2
+
+    def calc_ssi2(self,msg):   
+        '''
+        unit: degree
+        '''
+        pitch_uint = msg.data[0] + 256 * msg.data[1] +  65536 * msg.data[2]
+        roll_uint = msg.data[3] + 256 * msg.data[4] +  65536 * msg.data[5]
+        pitch = pitch_uint * (1/32768) - 250.0
+        roll = roll_uint * (1/32768) - 250.0
+
+        return 'Time: {2:18.6f} Roll: {0:6.2f} Pitch: {1:6.2f}'.format(roll,pitch,msg.timestamp)
+        
+    def calc_accel(self,msg):   
+        '''
+        unit: g
+        '''    
+        ax_ay_az = struct.unpack('<HHHH', msg.data)
+        ax = ax_ay_az[0] * (0.01) - 320.0
+        ay = ax_ay_az[1] * (0.01) - 320.0
+        az = ax_ay_az[2] * (0.01) - 320.0        
+
+        return 'Time: {3:18.6f} AX  : {0:6.2f} AY   : {1:6.2f} AZ: {2:6.2f}'.format(ax,ay,az,msg.timestamp)
+
+    def calc_rate(self,msg):     
+        '''
+        unit: deg/s
+        '''   
+        wx_wy_wz = struct.unpack('<HHHH', msg.data)
+        wx = wx_wy_wz[0] * (1/128.0) - 250.0
+        wy = wx_wy_wz[1] * (1/128.0) - 250.0
+        wz = wx_wy_wz[2] * (1/128.0) - 250.0  
+
+        return 'Time: {3:18.6f} WX  : {0:6.2f} WY   : {1:6.2f} WZ: {2:6.2f}'.format(wx,wy,wz,msg.timestamp)
+     
+    def set_to_default(self, pwr_rst = True): # back to default confi and power cycle 
+        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':pwr_rst})
+        payload = self.request_cmd('unit_behavior')
+        while payload == False:
+            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                pass
+            time.sleep(1)   
+            payload = self.request_cmd('unit_behavior')
+        disablebit = int(payload[-2:], 16)
+        time.sleep(1)
+        self.set_cmd('set_unit_behavior', [0, disablebit, self.src])
+        time.sleep(1)
+        for i in ['pkt_rate','pkt_type', 'lpf_filter', 'orientation', 'unit_behavior', 'bank_ps0', 'bank_ps1']:
+            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i': i})
+            if isinstance(self.default_confi[i], list):
+                self.set_cmd('set_' + i, self.default_confi[i])
+            else:
+                self.set_cmd('set_' + i, [self.default_confi[i]])
+        time.sleep(1)
+        self.set_cmd('set_unit_behavior', [2, 0, self.src])
+        time.sleep(1)
+        if pwr_rst:
+            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'will power reset'})
+            self.set_cmd('save_config', [2]) # save and power reset
+            time.sleep(1)
+        return True  
+
+
+
+   
+
+    
+
+
+
+    
+
+
+
+      
+

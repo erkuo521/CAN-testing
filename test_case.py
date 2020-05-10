@@ -923,7 +923,7 @@ class aceinna_test_case():
         date_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
         file_path = os.path.join(os.getcwd(), 'data',
                             'can_data_{0:#X}_{1:#X}_{2}.txt'.format(self.dev.src, self.dev.sn_can, date_time))
-        f = open(file_path, 'w+')
+        f = open(file_path, 'w+', 1)
         print('start save data to file in 200s, pls wait, starting time:{0}'.format(date_time))
         all_zero = False
         while (time.time() - start_time) < 100: # recording 200s data
@@ -937,9 +937,10 @@ class aceinna_test_case():
                     self.dev.auto_msg_queue_lock[idx].release() 
                     if int(msg_dict['payload'], 16) == 0:
                         all_zero = True 
-                    f.write(str(msg_dict))
+                    f.write(str(msg_dict) + '\n')
             f.flush() # write to internal buffer, when full it will write to file by call()
             os.fsync(f) # force write to file now
+        f.close()
         print('finished save data file: {0}'.format(file_path))
         self.function_measure_data[sys._getframe().f_code.co_name] = all_zero
         return all_zero

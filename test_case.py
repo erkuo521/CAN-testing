@@ -8,6 +8,7 @@ class aceinna_test_case():
     def __init__(self, testfile, debug_mode = False):
         self.dev = None
         self.debug = debug_mode
+        self.fw_num = None
         # self.dev = aceinna_device(80)  # need to be delete
         self.test_file = testfile # csv write and read
         # self.test_start_row = 98       
@@ -18,9 +19,13 @@ class aceinna_test_case():
         self.init_test_dict()
         self.function_measure_data = {}        
 
-    def set_test_dev(self, dev_instance):
+    def set_test_dev(self, dev_instance, fwnum): 
+        '''
+        fwnum: 0x1301060005
+        '''
         self.dev = dev_instance
-
+        self.fw_num = fwnum
+        
     def run_test_case(self, test_item = None, start_idx = -1): 
         '''
         test_item = '1.7', only running the items or will test all items
@@ -34,33 +39,31 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'begin testing'})
         if test_item == None:
             for idx,i in enumerate(self.test_case):
-                print(i[0], 'idx:', idx)
-                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx)})
+                print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
+                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
                 if idx > start_idx:
-                    if i[1] != 'manual' and i[1] != '': 
+                    if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
                     elif i[1] == 'manual':
                         eval(i[2], {'self':self, 'item':i[0], 'sp':i[3], 'other_type':i[1]})  
-                    else:  
-                        eval(i[2], {'self':self, 'item':i[0]})         
-                    time.sleep(0.5)            
+                    else:
+                        eval(i[2], {'self':self, 'item':i[0]})
+                    time.sleep(0.5)
         else:
             for idx,i in enumerate(self.test_case):
                 if i[0] == test_item:
-                    input(str(i[0]) + ' idx: ' + str(idx))
-                    # row = self.test_items.index(i[0]) + self.test_start_row
+                    print(i[0], 'idx:', idx, ' src: ', hex(self.dev.src))
+                    if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})                    # row = self.test_items.index(i[0]) + self.test_start_row
                     # cell_mea = (row, self.des_col)
                     # cell_rlt = (row, self.des_col + 1)
                     # print(eval('self.test_ecu_id(targetdata)', {'self':self,'targetdata':i[3]}))
                     # print(eval('self.function_measure_data[key]', {'self':self, 'key':i[1]}))
-                    if i[1] != 'manual' and i[1] != '': 
+                    if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
                     elif i[1] == 'manual':
                         eval(i[2], {'self':self, 'item':i[0], 'sp':i[3], 'other_type':i[1]})  
-                    else:  
+                    else:
                         eval(i[2], {'self':self, 'item':i[0]})  
-        print('testing finished', time.time())
-        if self.debug: input('testing finished')
 
     def init_test_dict(self): # ['item', 'function', 'target']
         self.test_case.append(['1.1', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
@@ -86,7 +89,7 @@ class aceinna_test_case():
         self.test_case.append(['3.4', 'test_lpf_acc', 'self.test_file.write([item, self.test_lpf_acc(targetdata), self.function_measure_data[key]])', '0x05'])
         self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', '0x02'])
-        self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', '0x1301060004'])
+        self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', '0x1301070000'])
         self.test_case.append(['3.8', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4', '', 'self.test_file.write([item])', ''])
@@ -350,7 +353,7 @@ class aceinna_test_case():
         # fw_str = '.'.join([payload[:2], payload[2:4], payload[4:6], payload[6:8], payload[8:10]])
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return int(measure_data, 16) == int(target_data, 16)
+        return int(measure_data, 16) == int(self.fw_num, 16)
     
     def test_lpf(self, target_data): # 4.1.4
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -498,7 +501,7 @@ class aceinna_test_case():
         if nosaved_rst == True:
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
-            time.sleep(2)        
+            time.sleep(2)  
         payload = self.dev.request_cmd('pkt_rate')
         time.sleep(0.2)
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':payload})
@@ -557,6 +560,7 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         feedback = payload[-4:]
+        time.sleep(1)
         self.dev.set_to_default(pwr_rst = False)
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
@@ -647,14 +651,14 @@ class aceinna_test_case():
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         self.dev.set_to_default(pwr_rst=False)
-        time.sleep(1)
+        time.sleep(2)
         pkt_rate, pkt_type, dig_filter, ori_request = 0x60, 0x56, 0x57, 0x58
         data = [pkt_rate, pkt_type, dig_filter, ori_request]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
         if saved_rst == True:
             self.dev.set_cmd('save_config', [2]) # save and restart
-            time.sleep(1)
+            time.sleep(2)
         feedback = self.dev.request_cmd('pkt_rate') 
         self.dev.set_to_default(pwr_rst = False)
         if feedback == False:
@@ -836,7 +840,7 @@ class aceinna_test_case():
     def try_bank_ps0_list(self, target_data, algo_rst=0x60, hw_bit=0x62, sw_bit=0x63, status_bit=0x64, hr_acc=0x5C): # 5.9.1-5.9.5
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         self.dev.set_to_default()
-        time.sleep(1)
+        time.sleep(2)
         ps0_set_ok = True
         # algo_rst, hw_bit, sw_bit, status_bit, hr_acc = 0x60, 0x92, 0x93, 0x94, 0x5C
         data = [algo_rst, 0, hw_bit, sw_bit, status_bit, hr_acc]
@@ -881,7 +885,7 @@ class aceinna_test_case():
     def try_bank_ps1_list(self, target_data, pkt_rate = 0x75, pkt_type = 0x76, lpf_filter = 0x77, orientation = 0x78): # 5.9.6-5.9.9
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         self.dev.set_to_default()
-        time.sleep(1)
+        time.sleep(2)
         ps1_set_ok = True
         # pkt_rate = 0x55, pkt_type = 0x56, dig_filter = 0x57, orientation = 0x58
         data = [pkt_rate, pkt_type, lpf_filter, orientation]
@@ -972,7 +976,7 @@ def with_sc_pwr_cycle(self, to_lpf_rate = 5, to_odr = 5, to_pkt_type = 0x0F, to_
     self.save_configuration() # restart the unit
     while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
         pass
-    time.sleep(1)
+    time.sleep(2)
     # check the configurations saved or not
     print('check after power reset.')
     save_lpf_ok                 = True if self.get_lpf()[0] == to_lpf_rate else False
@@ -994,7 +998,7 @@ def without_sc_pwr_cycle(self, to_lpf_rate = 5, to_odr = 5, to_pkt_type = 0x0F, 
     self.set_unit_behavior(enabel_bit=0,disable_bit=1)
     while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
         pass
-    time.sleep(1)
+    time.sleep(2)
     # check the configurations saved or not
     back_lpf_ok                 = True if self.get_lpf()[0] == 25 else False
     back_odr_ok                 = True if self.get_packet_rate()[1] == 1 else False
@@ -1117,7 +1121,7 @@ def measure_pkt_type(self):
     self.set_odr(1)
     slope_exist, acc_exist, rate_exist, angle_ssi_exist, acc_hr_exist = 0, 0, 0, 0, 0
     if self.empty_data_pkt():            
-        time.sleep(1) # wait 1s to receive packets again
+        time.sleep(2) # wait 1s to receive packets again
         slope_exist       = 1 if self.slopedata.qsize() > 0 else 0
         rate_exist        = 2 if self.ratedate.qsize() > 0 else 0
         acc_exist         = 4 if self.acceldata.qsize() > 0 else 0

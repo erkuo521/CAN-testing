@@ -213,7 +213,7 @@ class aceinna_test_case():
         self.test_case.append(['5.9.7', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.8', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.9', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])       
-        # self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
+        self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
 
     def test_ecu_id(self, target_data): # 1.1, 1.2, 3.8 4.1.6
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -928,9 +928,9 @@ class aceinna_test_case():
         file_path = os.path.join(os.getcwd(), 'data',
                             'can_data_{0:#X}_{1:#X}_{2}.txt'.format(self.dev.src, self.dev.sn_can, date_time))
         f = open(file_path, 'w+', 1)
-        print('start save data to file in 200s, pls wait, starting time:{0}'.format(date_time))
+        print('start save data to file in 200s, pls wait, starting time:{0}, need wati 30s, pls wait!!'.format(date_time))
         all_zero = False
-        while (time.time() - start_time) < 100: # recording 200s data
+        while (time.time() - start_time) < 30: # recording 200s data
             for idx,item in enumerate(self.dev.auto_msg_queue):
                 self.dev.auto_msg_queue_lock[idx].acquire()
                 if item.empty():
@@ -946,8 +946,8 @@ class aceinna_test_case():
             os.fsync(f) # force write to file now
         f.close()
         print('finished save data file: {0}'.format(file_path))
-        self.function_measure_data[sys._getframe().f_code.co_name] = all_zero
-        return all_zero
+        self.function_measure_data[sys._getframe().f_code.co_name] = (all_zero == False)
+        return all_zero == False
 
 
 

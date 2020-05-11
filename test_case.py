@@ -71,8 +71,10 @@ class aceinna_test_case():
         self.test_case.append(['1.3', 'get_dev_src', 'self.test_file.write([item, self.get_dev_src(targetdata), self.function_measure_data[key]])', '0x80'])
         self.test_case.append(['1.4', 'get_addr_claim', 'self.test_file.write([item, self.get_addr_claim(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['1.5', 'verify_addr_saved', 'self.test_file.write([item, self.verify_addr_saved(targetdata), self.function_measure_data[key]])', '0x87'])
-        self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
+        # self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
+        # self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
+        self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
+        self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['1.8', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['1.9', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
@@ -250,30 +252,40 @@ class aceinna_test_case():
         time.sleep(1)
         return addr_in
 
-    # def verify_addr_saved_uart(self, target_data): #1.6-1.7 0x87
-    #     if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-    #     # get current address saved in EEPROM
-    #     addr_list = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
-    #     original = int(addr_list[-4:], 16)
-    #     #change addr and saved
-    #     self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
-    #     time.sleep(0.2)
-    #     self.dev.set_cmd('save_config', [2]) # save and power reset
-    #     time.sleep(2)
-    #     #check new value by uart
-    #     addr_newlist = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
-    #     new = int(addr_newlist[-4:], 16)
+    def verify_addr_saved_uart(self, target_data): #1.6-1.7 0x87
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        input('is {0} connect with /dev/ttyUSB0, right? y/n?'.format(hex(self.dev.src)))
+        # get current address saved in EEPROM
+        addr_list = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]) # 5555 5246 03 010032 acfa read 0x32 from EEPROM
+        while addr_list[0] != '5246':
+            addr_list = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]) # 5555 5246 03 010032 acfa read 0x32 from EEPROM
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_list})
+        original = int(addr_list[2][-4:], 16)
+        #change addr and saved
+        self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+        time.sleep(0.2)
+        self.dev.set_cmd('save_config', [2]) # save and power reset
+        time.sleep(2)
+        #check new value by uart
+        self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
+        time.sleep(0.1)
+        self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
+        addr_newlist = ['','','','']
+        while addr_newlist[0] != '5246':
+            addr_newlist = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]) # 5555 5246 03 010032 acfa read 0x32 from EEPROM
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_newlist})
+        new = int(addr_newlist[2][-4:], 16)
 
-    #     self.function_measure_data[sys._getframe().f_code.co_name] = new
+        self.function_measure_data[sys._getframe().f_code.co_name] = new
 
-    #     # back to original address
-    #     self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
-    #     self.dev.driver.send_can_msg(0x18FF5900, [new, 2, 0, original])
-    #     time.sleep(0.2)
-    #     self.dev.driver.send_can_msg(0x18FF5100, [2, new]) # save and power reset
-    #     time.sleep(2)
+        # back to original address
+        self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+        self.dev.driver.send_can_msg(0x18FF5900, [new, 2, 0, original])
+        time.sleep(0.2)
+        self.dev.driver.send_can_msg(0x18FF5100, [2, new]) # save and power reset
+        time.sleep(2)
 
-    #     return new == int(target_data, 16)
+        return new == int(target_data, 16)
         
     # 1.6 - 2.3 need to be realized
 

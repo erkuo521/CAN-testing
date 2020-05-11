@@ -37,7 +37,7 @@ def main(debug_main = False):
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
         main_test.set_test_dev(i, fwnum=0x1301070000)  # need to be updated for each testing ----------input: 1
         # input('22')
-        # main_test.run_test_case(test_item='5.9.6')
+        # main_test.run_test_case(test_item='5.3.1') # do single item test
         main_test.run_test_case()
     print('testing finished', time.time())
     
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     input('will start main()')
     try:
         print(time.time())
-        main(debug_main = False)
+        main(debug_main = True)  # open debug mode
     except Exception as e:
         print(e)
   

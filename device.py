@@ -321,13 +321,13 @@ class aceinna_device():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':list2})
         return list2
 
-    # def send_get_uart_msg(self, request_data):
-    #     '''
-    #     such as, request_data= [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]
-    #     request CAN address which saved in EEPROM
-    #     '''
-    #     strlist = self.driver.send_get_uart_msg(request_data)
-    #     return strlist
+    def send_get_uart_msg(self, request_data):
+        '''
+        such as, request_data= [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]
+        request CAN address which saved in EEPROM
+        '''
+        strlist = self.driver.send_get_uart_msg(request_data)
+        return strlist
         
 
     def calc_ssi2(self,msg):   

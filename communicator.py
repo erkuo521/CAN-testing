@@ -51,6 +51,7 @@ class aceinna_uart():
         self.packet_type_bytes = 2
         self.payload_len_bytes = 1
         self.crc_bytes = 2
+        self.send_msg(data=[0x55, 0x55, 0x57, 0x46, 0x05, 0x01, 0x00, 0x01, 0x00, 0x00, 0x4f, 0xec]) # request to keep quiet
 
     def send_msg(self, data):  # data is list
         self.UUT.write(data)
@@ -70,7 +71,7 @@ class aceinna_uart():
                 hex = self.UUT.read(1).hex()
                 if(hex == '55'):
                     #once header found, read other fields from the packet
-                    str_list.append(self.UUT.read(self.packet_type_bytes))
+                    str_list.append(self.UUT.read(self.packet_type_bytes).hex())
                     #print "Packet Type = " + packet_type
                     payload_size = self.UUT.read(self.payload_len_bytes).hex()
                     str_list.append(payload_size)

@@ -17,7 +17,7 @@ import struct
 import threading
 import subprocess
 from communicator import aceinna_can
-# from communicator import aceinna_can, aceinna_uart
+from communicator import aceinna_uart
 
 
 from queue import Queue # only python3 supported now
@@ -35,7 +35,7 @@ class aceinna_driver():
         self.thread_provide = threading.Thread(target=self.provide_msg)
         self.start_record()
 
-        # self.uart = aceinna_uart("/dev/ttyUSB0", 57600)        
+        self.uart = aceinna_uart("/dev/ttyUSB0", 57600)        
 
     def get_can_nodes(self):
         '''
@@ -112,13 +112,14 @@ class aceinna_driver():
         pdu_dict["payload"] = ''.join(msg_list[4:])        
         return pdu_dict    
 
-    # def send_get_uart_msg(self, data):         
-    #     get_value = []
-        # for i in range(5):
-        #     self.uart.send_msg(data)  
-        #     get_value = self.uart.get_msg()
-        #     if len(get_value) != 0:
-        #         break
-        #     time.sleep(0.5)    
+    def send_get_uart_msg(self, data):
+        get_value = []
+        for i in range(5):
+            self.uart.send_msg(data)
+            get_value = self.uart.get_msg()
+            if len(get_value) != 0:
+                break
+            time.sleep(0.5)    
+        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':get_value})
 
-    #     return get_value
+        return get_value

@@ -35,7 +35,7 @@ class aceinna_driver():
         self.thread_provide = threading.Thread(target=self.provide_msg)
         self.start_record()
 
-        self.uart = aceinna_uart("/dev/ttyUSB0", 57600)        
+        self.uart = aceinna_uart()        
 
     def get_can_nodes(self):
         '''
@@ -51,7 +51,7 @@ class aceinna_driver():
         
         time.sleep(1.1)
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':self.can_nodes})
-        return [x for x in self.can_nodes if x in range(0x80, 0x100)] # 检查范围[128, 256) 
+        return [x for x in self.can_nodes if x in range(0x80, 0x100)] # range check[128, 256) 
 
     def start_record(self):
         self.thread_put.start()
@@ -114,6 +114,8 @@ class aceinna_driver():
 
     def send_get_uart_msg(self, data):
         get_value = []
+        if self.uart.UUT == None:
+            self.uart.set_uut("/dev/ttyUSB0", 57600)
         for i in range(5):
             self.uart.send_msg(data)
             get_value = self.uart.get_msg()

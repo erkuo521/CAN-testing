@@ -43,18 +43,23 @@ class aceinna_can():
         return self.can0.recv()
 
 class aceinna_uart(): 
-    def __init__(self, port, baudrate):   
-        self.baudrate = baudrate
-        self.port = port
-        self.UUT = serial.Serial(port, baudrate, timeout = 2)
+    def __init__(self):   
+        self.baudrate = None
+        self.port = None
+        self.UUT = None
         self.header_bytes = 2
         self.packet_type_bytes = 2
         self.payload_len_bytes = 1
         self.crc_bytes = 2
-        self.send_msg(data=[0x55, 0x55, 0x57, 0x46, 0x05, 0x01, 0x00, 0x01, 0x00, 0x00, 0x4f, 0xec]) # request to keep quiet
 
     def send_msg(self, data):  # data is list
         self.UUT.write(data)
+    
+    def set_uut(self, port, baudrate):
+        self.baudrate = baudrate
+        self.port = port
+        self.UUT = serial.Serial(port, baudrate, timeout = 2)
+        self.send_msg(data=[0x55, 0x55, 0x57, 0x46, 0x05, 0x01, 0x00, 0x01, 0x00, 0x00, 0x4f, 0xec]) # request to keep quiet
     
     def get_msg(self, timeout = 10):
         retry = 0

@@ -17,7 +17,7 @@ class aceinna_test_case():
         
         self.test_case = []
         self.init_test_dict()
-        self.function_measure_data = {}        
+        self.function_measure_data = {}
 
     def set_test_dev(self, dev_instance, fwnum): 
         '''
@@ -71,10 +71,10 @@ class aceinna_test_case():
         self.test_case.append(['1.3', 'get_dev_src', 'self.test_file.write([item, self.get_dev_src(targetdata), self.function_measure_data[key]])', '0x80'])
         self.test_case.append(['1.4', 'get_addr_claim', 'self.test_file.write([item, self.get_addr_claim(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['1.5', 'verify_addr_saved', 'self.test_file.write([item, self.verify_addr_saved(targetdata), self.function_measure_data[key]])', '0x87'])
-        # self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
-        # self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
-        self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
+        self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
+        # self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
+        # self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['1.8', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['1.9', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])

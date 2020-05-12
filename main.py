@@ -47,7 +47,7 @@ if __name__ == "__main__":
     input('will start main()')
     try:
         print(time.time())
-        main(debug_main = True)  # open debug mode
+        main(debug_main = False)  # open debug mode
     except Exception as e:
         print(e)
   

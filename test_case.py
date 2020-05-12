@@ -40,7 +40,7 @@ class aceinna_test_case():
         if test_item == None:
             for idx,i in enumerate(self.test_case):
                 print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
-                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
+                if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
                 if idx > start_idx:
                     if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
@@ -53,7 +53,7 @@ class aceinna_test_case():
             for idx,i in enumerate(self.test_case):
                 if i[0] == test_item:
                     print(i[0], 'idx:', idx, ' src: ', hex(self.dev.src))
-                    if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})                    # row = self.test_items.index(i[0]) + self.test_start_row
+                    if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})                    # row = self.test_items.index(i[0]) + self.test_start_row
                     # cell_mea = (row, self.des_col)
                     # cell_rlt = (row, self.des_col + 1)
                     # print(eval('self.test_ecu_id(targetdata)', {'self':self,'targetdata':i[3]}))
@@ -91,7 +91,7 @@ class aceinna_test_case():
         self.test_case.append(['3.4', 'test_lpf_acc', 'self.test_file.write([item, self.test_lpf_acc(targetdata), self.function_measure_data[key]])', '0x05'])
         self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', '0x02'])
-        self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', '0x1301070000'])
+        self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.8', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4', '', 'self.test_file.write([item])', ''])
@@ -365,7 +365,7 @@ class aceinna_test_case():
         # fw_str = '.'.join([payload[:2], payload[2:4], payload[4:6], payload[6:8], payload[8:10]])
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return int(measure_data, 16) == int(self.fw_num, 16)
+        return int(measure_data, 16) == self.fw_num
     
     def test_lpf(self, target_data): # 4.1.4
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})

@@ -215,6 +215,7 @@ class aceinna_test_case():
         self.test_case.append(['5.9.7', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.8', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.9', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])       
+        self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
 
     def test_ecu_id(self, target_data): # 1.1, 1.2, 3.8 4.1.6

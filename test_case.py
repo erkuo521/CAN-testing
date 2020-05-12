@@ -26,7 +26,7 @@ class aceinna_test_case():
         self.dev = dev_instance
         self.fw_num = fwnum
         
-    def run_test_case(self, test_item = None, start_idx = -1): 
+    def run_test_case(self, test_item = [], start_idx = -1): 
         '''
         test_item = '1.7', only running the items or will test all items
         '''
@@ -37,7 +37,7 @@ class aceinna_test_case():
         print('finished set to default plant configuration.')
         if self.debug: input('finished set to default plant configuration.')
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'begin testing'})
-        if test_item == None:
+        if len(test_item) == 0:
             for idx,i in enumerate(self.test_case):
                 print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
                 if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
@@ -51,7 +51,7 @@ class aceinna_test_case():
                     time.sleep(0.5)
         else:
             for idx,i in enumerate(self.test_case):
-                if i[0] == test_item:
+                if i[0] in test_item:
                     print(i[0], 'idx:', idx, ' src: ', hex(self.dev.src))
                     if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})                    # row = self.test_items.index(i[0]) + self.test_start_row
                     # cell_mea = (row, self.des_col)
@@ -353,7 +353,7 @@ class aceinna_test_case():
         feedback = payload[-2:]    # & 0x3F 
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return int(measure_data, 16) == int(target_data, 16)
+        return (int(measure_data, 16) & 0x3F) == int(target_data, 16)
     
     def test_fw_version(self, target_data): # 3.7, 4.1.1
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -606,6 +606,7 @@ class aceinna_test_case():
         '''
         target_data: such as '0x02', it is string of enable_bit
         '''
+        self.dev.set_to_default(pwr_rst = True)
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
@@ -634,7 +635,7 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i, j, m, n, h)', {'k':sys._getframe().f_code.co_name,'i':feedback, 'j':original_behavior, 'm':enabel_bit, 'n':target_behavior, 'h':disable_bit})
         measure_data = "0x{0}".format(feedback)
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return int(measure_data, 16) == target_behavior
+        return (int(measure_data, 16) & 0x3F) == enabel_bit
 
     def set_bank_ps0(self, target_data, saved_rst = False, algo_rst=0x60, hw_bit=0x52, sw_bit=0x53, status_bit=0x54, hr_acc=0x6C): # 4.2.8
         '''
@@ -662,16 +663,16 @@ class aceinna_test_case():
         target_data: such as '0x0000' '0x0165'
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-        self.dev.set_to_default(pwr_rst=False)
-        time.sleep(2)
+        self.dev.set_to_default()
         pkt_rate, pkt_type, dig_filter, ori_request = 0x60, 0x56, 0x57, 0x58
         data = [pkt_rate, pkt_type, dig_filter, ori_request]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
         if saved_rst == True:
             self.dev.set_cmd('save_config', [2]) # save and restart
-            time.sleep(2)
+            time.sleep(1)
         feedback = self.dev.request_cmd('pkt_rate') 
+        time.sleep(0.2)
         self.dev.set_to_default(pwr_rst = False)
         if feedback == False:
             self.function_measure_data[sys._getframe().f_code.co_name] = True  
@@ -826,7 +827,7 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok      
         return bhr_set_ok
 
-    def try_unit_bhr_list_old(self, target_data):  # 5.8.2-5.8.13
+    def try_unit_bhr_list_old(self, target_data):  # invalid now
         # check some behavior configuration items is set
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         enable_list       = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20]
@@ -851,7 +852,7 @@ class aceinna_test_case():
 
     def try_bank_ps0_list(self, target_data, algo_rst=0x60, hw_bit=0x62, sw_bit=0x63, status_bit=0x64, hr_acc=0x5C): # 5.9.1-5.9.5
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
-        self.dev.set_to_default()
+        self.dev.set_to_default(pwr_rst = False)
         time.sleep(2)
         ps0_set_ok = True
         # algo_rst, hw_bit, sw_bit, status_bit, hr_acc = 0x60, 0x92, 0x93, 0x94, 0x5C
@@ -896,33 +897,41 @@ class aceinna_test_case():
 
     def try_bank_ps1_list(self, target_data, pkt_rate = 0x75, pkt_type = 0x76, lpf_filter = 0x77, orientation = 0x78): # 5.9.6-5.9.9
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
-        self.dev.set_to_default()
+        self.dev.set_to_default(pwr_rst = False)
         time.sleep(2)
         ps1_set_ok = True
         # pkt_rate = 0x55, pkt_type = 0x56, dig_filter = 0x57, orientation = 0x58
+        if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':'before set bank ps1'})
+        self.dev.empty_data_pkt()
+        time.sleep(0.2)
         data = [pkt_rate, pkt_type, lpf_filter, orientation]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
+        if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':'after set bank ps1'})
         if pkt_rate != 0x55:            
             feedback3 = self.dev.request_cmd('pkt_rate')
             feedback4 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + pkt_rate)
             if (feedback3 != False) or (feedback4 == False):
                 ps1_set_ok = False
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback3, feedback4, ps1_set_ok]})
         if pkt_type != 0x56:            
             feedback5 = self.dev.request_cmd('pkt_type')
             feedback6 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + pkt_type)
             if (feedback5 != False) or (feedback6 == False):
                 ps1_set_ok = False
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback5, feedback6, ps1_set_ok]})
         if lpf_filter != 0x57:            
             feedback7 = self.dev.request_cmd('lpf_filter')
             feedback8 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + lpf_filter)
             if (feedback7 != False) or (feedback8 == False):
                 ps1_set_ok = False
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback7, feedback8, ps1_set_ok]})
         if orientation != 0x58:
             feedback9 = self.dev.request_cmd('orientation')
             feedback10 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + orientation)
             if (feedback9 != False) or (feedback10 == False):
                 ps1_set_ok = False
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback9, feedback10, ps1_set_ok]})
         self.function_measure_data[sys._getframe().f_code.co_name] = ps1_set_ok
         return ps1_set_ok
 
@@ -972,7 +981,7 @@ class aceinna_test_case():
 # return True if fb_type == 1 and fb_result == 1 else False
 
 # cmd_idx = feedback_des['fb_id']
-# self.set_feedback_payload[cmd_idx] == None
+# self.set_feedback_payload[cmd_idx] = None
 # feedback_des = [x for x in self.can_attribute if x['type'] == 'feedback' and x['name'] == ''.join([cmd_name,'_feedback'])]
 
 

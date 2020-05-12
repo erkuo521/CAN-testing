@@ -125,15 +125,17 @@ class aceinna_device():
         cmd_type should in ['fw_version', 'ecu_id', 'hw_bit', 'sw_bit', 'status', 'pkt_rate', 'pkt_type', 'lpf_filter', 'orientation', 'unit_behavior']
         '''
         pgn_des = [x for x in self.can_attribute if x['type'] == 'request' and x['name'] == cmd_name][0]
+
         if len(pgn_des):
             cmd_idx = pgn_des['req_id']
             cmd_pgn = pgn_des['pgn']
-            self.req_feedback_payload[cmd_idx] == None
+            if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]}) 
+            self.req_feedback_payload[cmd_idx] = None # set the value which correspond to cmd_idx in list(req_feedback_payload) to None
             data = [self.src, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
             for i in range(5):
                 self.driver.send_can_msg(self.req_ext_id_templete | cmd_idx, data)  
                 time.sleep(0.2)          
-                if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':data + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload})            
+                if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':data + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]})            
                 if self.req_feedback_payload[cmd_idx] != None:
                     return self.req_feedback_payload[cmd_idx]['payload']
                 else:
@@ -364,8 +366,13 @@ class aceinna_device():
         return 'Time: {3:18.6f} WX  : {0:6.2f} WY   : {1:6.2f} WZ: {2:6.2f}'.format(wx,wy,wz,msg.timestamp)
      
     def set_to_default(self, pwr_rst = True): # back to default confi and power cycle 
-        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':pwr_rst})
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':pwr_rst})
         payload = self.request_cmd('unit_behavior')
+        for i in range(5):   # some times unit will no feedback for 80FF59 Request, need to restart by SW or manualy restart in below
+            if payload == False: 
+                self.set_cmd('save_config', [2]) # save and power reset
+                time.sleep(0.2)
+                payload = self.request_cmd('unit_behavior')
         while payload == False:
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass

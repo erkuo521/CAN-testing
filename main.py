@@ -33,12 +33,14 @@ def main(debug_main = False):
     # test_file = my_csv('result.csv')
     for i in device_list:
         print('start testing device_src:{0} device_sn:{1}'.format(hex(i.src), hex(i.sn_can)))
+        if debug_main: eval('input([k, i, j])', {'k':sys._getframe().f_code.co_name,'i':hex(i.sn_can), 'j':hex(i.src)})
         test_file = my_csv(os.path.join(os.getcwd(), 'data','result_{0:#X}_{1:#X}.csv'.format(i.src, i.sn_can)))
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
         main_test.set_test_dev(i, fwnum=0x1301070000)  # need to be updated for each testing ----------input: 1
         # input('22')
-        # main_test.run_test_case(test_item='5.3.1') # do single item test
-        main_test.run_test_case()
+        testitems = ['4.2.7', '5.1.5']
+        main_test.run_test_case(test_item=[]) # do single/multi items test in testitems list if needed
+        # main_test.run_test_case()
     print('testing finished', time.time())
     
     return True

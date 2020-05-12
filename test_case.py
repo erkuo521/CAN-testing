@@ -277,7 +277,7 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_newlist})
         new = int(addr_newlist[2][-4:], 16)
 
-        self.function_measure_data[sys._getframe().f_code.co_name] = new
+        self.function_measure_data[sys._getframe().f_code.co_name] = (new == int(target_data, 16))
 
         # back to original address
         self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])

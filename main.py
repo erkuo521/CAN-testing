@@ -38,7 +38,7 @@ def main(debug_main = False):
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
         main_test.set_test_dev(i, fwnum=0x1301070000)  # need to be updated for each testing ----------input: 1
         # input('22')
-        testitems = ['4.2.7', '5.1.5']
+        testitems = ['1.6', '1.7']
         main_test.run_test_case(test_item=[]) # do single/multi items test in testitems list if needed
         # main_test.run_test_case()
     print('testing finished', time.time())

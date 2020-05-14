@@ -264,7 +264,7 @@ class aceinna_device():
                 pass
         return False
 
-    def measure_pkt_type(self):
+    def measure_pkt_type(self, type_num = 5):
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         payload = self.request_cmd('pkt_type')
         while payload == False:
@@ -275,20 +275,24 @@ class aceinna_device():
         time.sleep(0.2)
         self.set_cmd('set_pkt_rate', [1])
         time.sleep(0.2)
-        slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
+        # slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
+        exist_list = [0] * type_num
         self.empty_data_pkt()   
 
         idx_list = [self.get_item_json(x)['auto_id'] for x in ['ssi2', 'rate', 'accel', 'ssi', 'acc_hr']]
         if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:'})        
         time.sleep(2) # wait 1s to receive packets again
-        slope_exist       = 1 if (self.auto_msg_queue[idx_list[0]].qsize() > 0) else 0
-        rate_exist        = 2 if self.auto_msg_queue[idx_list[1]].qsize() > 0 else 0
-        acc_exist         = 4 if self.auto_msg_queue[idx_list[2]].qsize() > 0 else 0
-        angle_ssi_exist   = 8 if self.auto_msg_queue[idx_list[3]].qsize() > 0 else 0
-        hr_acc_exist      = 16 if self.auto_msg_queue[idx_list[4]].qsize() > 0 else 0  
-        list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
-        sumexist = sum(list1)
-        if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:','m':list1})
+
+        for i in range(type_num):
+            exist_list[i]  = pow(2, i) if (self.auto_msg_queue[idx_list[i]].qsize() > 0) else 0
+        # slope_exist       = 1 if (self.auto_msg_queue[idx_list[0]].qsize() > 0) else 0
+        # rate_exist        = 2 if self.auto_msg_queue[idx_list[1]].qsize() > 0 else 0
+        # acc_exist         = 4 if self.auto_msg_queue[idx_list[2]].qsize() > 0 else 0
+        # angle_ssi_exist   = 8 if self.auto_msg_queue[idx_list[3]].qsize() > 0 else 0
+        # hr_acc_exist      = 16 if self.auto_msg_queue[idx_list[4]].qsize() > 0 else 0  
+        # list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
+        sumexist = sum(exist_list)
+        if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:','m':exist_list})
         # eval('print(k,l,m )',{'k':1,'l':'exist','m':2})
         if sumexist == 0 & self.debug:
             if self.debug: input('sumexist of pkt_type is o')

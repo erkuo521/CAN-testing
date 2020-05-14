@@ -868,26 +868,26 @@ class aceinna_test_case():
             if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':ps0_set_ok})
         if hw_bit != 0x52:            
             feedback3 = self.dev.request_cmd('hw_bit')
-            feedback4 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + hw_bit)
+            feedback4 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + hw_bit)
             if (feedback3 != False) or (feedback4 == False):
                 ps0_set_ok = False
             if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':ps0_set_ok})
         if sw_bit != 0x53:            
             feedback5 = self.dev.request_cmd('sw_bit')
-            feedback6 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + sw_bit)
+            feedback6 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + sw_bit)
             if (feedback5 != False) or (feedback6 == False):
                 ps0_set_ok = False
             if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':ps0_set_ok})
         if status_bit != 0x54:            
             feedback7 = self.dev.request_cmd('status')
-            feedback8 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + status_bit)
+            feedback8 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + status_bit)
             if (feedback7 != False) or (feedback8 == False):
                 ps0_set_ok = False
             if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':ps0_set_ok})
         if hr_acc != 0x6C:
             feedback9 = self.get_acc_hr(target_data='',back_default=False)
             if self.debug: eval('print(k,m, i)', {'k':sys._getframe().f_code.co_name, 'm':'feedback9:','i':feedback9})
-            feedback10 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + hr_acc)
+            feedback10 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + hr_acc)
             if (feedback9 != False) or (feedback10 == False):
                 ps0_set_ok = False
             if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':ps0_set_ok})
@@ -911,25 +911,25 @@ class aceinna_test_case():
         if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':'after set bank ps1'})
         if pkt_rate != 0x55:            
             feedback3 = self.dev.request_cmd('pkt_rate')
-            feedback4 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + pkt_rate)
+            feedback4 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + pkt_rate)
             if (feedback3 != False) or (feedback4 == False):
                 ps1_set_ok = False
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback3, feedback4, ps1_set_ok]})
         if pkt_type != 0x56:            
             feedback5 = self.dev.request_cmd('pkt_type')
-            feedback6 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + pkt_type)
+            feedback6 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + pkt_type)
             if (feedback5 != False) or (feedback6 == False):
                 ps1_set_ok = False
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback5, feedback6, ps1_set_ok]})
         if lpf_filter != 0x57:            
             feedback7 = self.dev.request_cmd('lpf_filter')
-            feedback8 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + lpf_filter)
+            feedback8 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + lpf_filter)
             if (feedback7 != False) or (feedback8 == False):
                 ps1_set_ok = False
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback7, feedback8, ps1_set_ok]})
         if orientation != 0x58:
             feedback9 = self.dev.request_cmd('orientation')
-            feedback10 = self.dev.new_request_cmd(src = self.dev.src, new_pgn = 0xFF00 + orientation)
+            feedback10 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + orientation)
             if (feedback9 != False) or (feedback10 == False):
                 ps1_set_ok = False
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback9, feedback10, ps1_set_ok]})

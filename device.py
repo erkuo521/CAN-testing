@@ -44,6 +44,7 @@ class aceinna_device():
         self.driver = driver_instance
 
     def update_sn(self):
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         ecu_id_payload = self.request_cmd(cmd_name = 'ecu_id')
         # if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':ecu_id_payload})
         high_16bits_value = int(ecu_id_payload[-2:] + ecu_id_payload[-4:-2], 16) << 5
@@ -92,13 +93,24 @@ class aceinna_device():
         else:
             pass  # to be added
 
-    # def get_unknow_json_item(self, type):
-    #     pgn_list = [x for x in self.can_attribute if 'pgn' in x]
-    #     pgn_des = [x for x in pgn_list if x['pgn'] == 'None'][0]
+    def get_item_json(self, namestr = None, pgnnum = None, extsetid = None):        
+        if namestr != None:
+            return [x for x in self.can_attribute if x['name'] == namestr][0]
 
-    #     id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
-    #     id_idx = pgn_des[id_name] 
-    #     return pgn_des, id_name, id_idx
+        if pgnnum != None:
+            pgn_list = [x for x in self.can_attribute if 'pgn' in x]
+            return [x for x in pgn_list if x['pgn'] == pgnnum][0]
+
+        if extsetid != None:
+            pgn_list = [x for x in self.can_attribute if 'ext_set_id' in x]
+            return [x for x in pgn_list if x['ext_set_id'] == extsetid][0]
+
+        # pgn_list = [x for x in self.can_attribute if x['name'] == 'None']
+        # pgn_des = [x for x in pgn_list if x['pgn'] == 'None'][0]
+
+        # id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
+        # id_idx = pgn_des[id_name] 
+        # return pgn_des, id_name, id_idx
 
     def put_msg(self, pdu_msg):
         pgn_list = [x for x in self.can_attribute if 'pgn' in x]
@@ -131,7 +143,7 @@ class aceinna_device():
             cmd_pgn = pgn_des['pgn']
             if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]}) 
             self.req_feedback_payload[cmd_idx] = None # set the value which correspond to cmd_idx in list(req_feedback_payload) to None
-            data = [self.src, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
+            data = [00, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
             for i in range(5):
                 self.driver.send_can_msg(self.req_ext_id_templete | cmd_idx, data)  
                 time.sleep(0.2)          
@@ -264,17 +276,19 @@ class aceinna_device():
         self.set_cmd('set_pkt_rate', [1])
         time.sleep(0.2)
         slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
-        self.empty_data_pkt()    
-        if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[0].qsize(), 'slope':'slope_exist:'})        
+        self.empty_data_pkt()   
+
+        idx_list = [self.get_item_json(x)['auto_id'] for x in ['ssi2', 'rate', 'accel', 'ssi', 'acc_hr']]
+        if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:'})        
         time.sleep(2) # wait 1s to receive packets again
-        slope_exist       = 1 if (self.auto_msg_queue[0].qsize() > 0) else 0
-        rate_exist        = 2 if self.auto_msg_queue[1].qsize() > 0 else 0
-        acc_exist         = 4 if self.auto_msg_queue[2].qsize() > 0 else 0
-        angle_ssi_exist   = 8 if self.auto_msg_queue[4].qsize() > 0 else 0
-        hr_acc_exist      = 16 if self.auto_msg_queue[5].qsize() > 0 else 0  
+        slope_exist       = 1 if (self.auto_msg_queue[idx_list[0]].qsize() > 0) else 0
+        rate_exist        = 2 if self.auto_msg_queue[idx_list[1]].qsize() > 0 else 0
+        acc_exist         = 4 if self.auto_msg_queue[idx_list[2]].qsize() > 0 else 0
+        angle_ssi_exist   = 8 if self.auto_msg_queue[idx_list[3]].qsize() > 0 else 0
+        hr_acc_exist      = 16 if self.auto_msg_queue[idx_list[4]].qsize() > 0 else 0  
         list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
         sumexist = sum(list1)
-        if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[0].qsize(), 'slope':'slope_exist:','m':list1})
+        if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:','m':list1})
         # eval('print(k,l,m )',{'k':1,'l':'exist','m':2})
         if sumexist == 0 & self.debug:
             if self.debug: input('sumexist of pkt_type is o')

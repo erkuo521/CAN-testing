@@ -702,7 +702,7 @@ class aceinna_test_case():
     def set_hw_bit_ps(self, target_data, saved_rst = False, nosaved_rst = False): # 5.1.6 5.2.6
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         new_hw_bit = 0x60
-        self.dev.set_cmd(cmd_name = 'set_bank_ps0', payload_without_src = [0x50, 0, new_hw_bit, 0x53, 0x54, 0x6C])
+        self.dev.set_cmd(cmd_name = 'set_bank_ps0', payload_without_src = [0x50, 0, new_hw_bit, 0x53, 0x54, 0x6C, 0x00, 0x00])
         time.sleep(0.2)
         if saved_rst == True:
             self.dev.set_cmd('save_config', [2]) # save and restart
@@ -857,7 +857,7 @@ class aceinna_test_case():
         time.sleep(2)
         ps0_set_ok = True
         # algo_rst, hw_bit, sw_bit, status_bit, hr_acc = 0x60, 0x92, 0x93, 0x94, 0x5C
-        data = [algo_rst, 0, hw_bit, sw_bit, status_bit, hr_acc]
+        data = [algo_rst, 0, hw_bit, sw_bit, status_bit, hr_acc, 0x00, 0x00]
         self.dev.set_cmd('set_bank_ps0', data)
         time.sleep(0.2)
         if algo_rst != 0x50:
@@ -905,7 +905,7 @@ class aceinna_test_case():
         if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':'before set bank ps1'})
         self.dev.empty_data_pkt()
         time.sleep(0.2)
-        data = [pkt_rate, pkt_type, lpf_filter, orientation]
+        data = [pkt_rate, pkt_type, lpf_filter, orientation, 0x00, 0x00, 0x00, 0x00]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
         if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':'after set bank ps1'})

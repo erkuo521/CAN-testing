@@ -356,7 +356,7 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
-    def test_unit_behavior(self, target_data, len_fb_bytes = 2): # 3.6
+    def test_unit_behavior(self, target_data, len_fb_bytes = 2): # 3.6, 4.1.10
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
@@ -370,10 +370,11 @@ class aceinna_test_case():
             feedback = payload[-(len_fb_bytes-1)*2:]   
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
 
-        # feedback = payload[-2:]    # & 0x3F 
+        # feedback = payload[-2:]    # & bitmask: 0x3F 
+        bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits, 0x1F for 4 bits
         measure_data = "0x{0}".format(feedback)     
-        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return (int(measure_data, 16) & 0x3F) == self.dev.predefine.get('unit_behavior')
+        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data
+        return (int(measure_data, 16) & bit_mask) == self.dev.predefine.get('unit_behavior')
     
     def test_fw_version(self, target_data): # 3.7, 4.1.1
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})

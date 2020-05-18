@@ -4,6 +4,7 @@
     "predefine":{
         "fwnum":"0x0100000000",
         "unit_behavior": 7,
+        "bits_unit_bhr": 4,
         "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9", "4.1.7", "4.1.8"]
     },
     "configuration":{

@@ -2,7 +2,8 @@
     "name":"parameters for devices",
     "type":"OPEN335RI",
     "predefine":{
-        "unit_behavior": 7
+        "unit_behavior": 7,
+        "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9"]
     },
     "configuration":{
         "can":[
@@ -20,7 +21,7 @@
             {"req_id":3, "name":"sw_bit",              "pgn": 65363, "type":"request"},
             {"req_id":4, "name":"status",              "pgn": 65364, "type":"request"},
             {"req_id":5, "name":"pkt_rate",            "pgn": 65365, "type":"request"},
-            {"req_id":6, "name":"pkt_type",            "pgn": 65366, "type":"request"},
+            {"req_id":6, "name":"pkt_type",            "pgn": 65366, "type":"request", "fb_length":3},
             {"req_id":7, "name":"lpf_filter",          "pgn": 65367, "type":"request"},
             {"req_id":8, "name":"orientation",         "pgn": 65368, "type":"request"},
             {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request"},

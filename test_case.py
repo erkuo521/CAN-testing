@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import struct
 import datetime
 from device import aceinna_device # need to be delete
 
@@ -41,6 +42,9 @@ class aceinna_test_case():
             for idx,i in enumerate(self.test_case):
                 print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
                 if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
+                if i[0] in self.dev.predefine.get('exclude_list'):
+                    self.test_file.write([i[0], 'N/A', 'N/A'])
+                    continue
                 if idx > start_idx:
                     if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
@@ -301,13 +305,19 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
-    def test_pkt_type(self, target_data): # 3.2 4.1.3
+    def test_pkt_type(self, target_data, len_fb_bytes = 2): # 3.2 4.1.3
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         payload = self.dev.request_cmd('pkt_type')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
-        feedback = payload[-2:] 
+        if self.dev.get_item_json('pkt_type')['fb_length'] == 2:
+            len_fb_bytes == 2
+            feedback = payload[-(len_fb_bytes-1)*2:]   
+        elif self.dev.get_item_json('pkt_type')['fb_length'] == 3:
+            len_fb_bytes == 3
+            feedback = payload[-(len_fb_bytes-1)*2:]   
+            feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)

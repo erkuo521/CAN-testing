@@ -11,7 +11,6 @@
             {"auto_id":2, "name":"accel",                "pgn": 61485, "type":"auto"},
             {"auto_id":3, "name":"addr",                 "pgn": 61183, "type":"auto"},
             {"auto_id":4, "name":"ssi",                  "pgn": 61459, "type":"auto"},
-            {"auto_id":5, "name":"rate_hr",               "pgn": 65387, "type":"auto"},
             {"auto_id":5, "name":"acc_hr",               "pgn": 65388, "type":"auto"},
             {"auto_id":6, "name":"unknow",               "pgn": "None", "type":"auto"},
             {"req_id":0, "name":"fw_version",           "pgn": 65242, "type":"request"},

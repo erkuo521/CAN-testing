@@ -94,7 +94,7 @@ class aceinna_test_case():
         self.test_case.append(['3.3', 'test_lpf_rate', 'self.test_file.write([item, self.test_lpf_rate(targetdata), self.function_measure_data[key]])', '0x19'])
         self.test_case.append(['3.4', 'test_lpf_acc', 'self.test_file.write([item, self.test_lpf_acc(targetdata), self.function_measure_data[key]])', '0x05'])
         self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
-        self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', '0x02'])
+        self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.8', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
@@ -312,13 +312,14 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         if self.dev.get_item_json('pkt_type')['fb_length'] == 2:
-            len_fb_bytes == 2
             feedback = payload[-(len_fb_bytes-1)*2:]   
+            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':feedback}) 
         elif self.dev.get_item_json('pkt_type')['fb_length'] == 3:
-            len_fb_bytes == 3
-            feedback = payload[-(len_fb_bytes-1)*2:]   
+            len_fb_bytes = 3
+            feedback = payload[-(len_fb_bytes-1)*2:]
+            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':['fb_byte:', len_fb_bytes,feedback]}) 
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
-        measure_data = "0x{0}".format(feedback)     
+        measure_data = "0x{0}".format(feedback)  
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
@@ -355,16 +356,24 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
-    def test_unit_behavior(self, target_data): # 3.6
+    def test_unit_behavior(self, target_data, len_fb_bytes = 2): # 3.6
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
-        feedback = payload[-2:]    # & 0x3F 
+        
+        if self.dev.get_item_json('unit_behavior')['fb_length'] == 2:
+            feedback = payload[-(len_fb_bytes-1)*2:]   
+        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
+            len_fb_bytes = 3
+            feedback = payload[-(len_fb_bytes-1)*2:]   
+            feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+
+        # feedback = payload[-2:]    # & 0x3F 
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return (int(measure_data, 16) & 0x3F) == int(target_data, 16)
+        return (int(measure_data, 16) & 0x3F) == self.dev.predefine.get('unit_behavior')
     
     def test_fw_version(self, target_data): # 3.7, 4.1.1
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})

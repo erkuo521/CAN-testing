@@ -1,8 +1,10 @@
 {
     "name":"parameters for devices",
-    "type":"MTLT305D",
+    "type":"MTLT305D",    
     "predefine":{
-        "unit_behavior": 2
+        "fwnum":"0x1301070000",
+        "unit_behavior": 2,
+        "exclude_list":[]
     },
     "configuration":{
         "can":[
@@ -22,7 +24,7 @@
             {"req_id":6, "name":"pkt_type",            "pgn": 65366, "type":"request", "fb_length":2},
             {"req_id":7, "name":"lpf_filter",          "pgn": 65367, "type":"request"},
             {"req_id":8, "name":"orientation",         "pgn": 65368, "type":"request"},
-            {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request"},
+            {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request", "fb_length":2},
             {"fb_id":0, "name":"save_config_feedback",    "pgn": 65361, "type":"feedback"},
             {"fb_id":1, "name":"algo_rst_feedback",       "pgn": 65360, "type":"feedback"},
             {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set"},

@@ -55,11 +55,12 @@ class aceinna_device():
         self.sn_can = high_16bits_value + low_5bits_value  # it is the last 5 figures in whole hex_sn.
     
     def init_default_confi(self):
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         self.default_confi['pkt_rate'] = 1
         self.default_confi['pkt_type'] = 7
         self.default_confi['lpf_filter'] = [25, 5] # lpf_rate, lpf_acc
         self.default_confi['orientation'] = 0
-        self.default_confi['unit_behavior'] = 2
+        self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 2
         self.default_confi['bank_ps0'] = [0x50, 0x00, 0x52, 0x53, 0x54, 0x6C]
         self.default_confi['bank_ps1'] = [0x55, 0x56, 0x57, 0x58]
 
@@ -408,7 +409,7 @@ class aceinna_device():
             else:
                 self.set_cmd('set_' + i, [self.default_confi[i]])
         time.sleep(1)
-        self.set_cmd('set_unit_behavior', [2, 0, self.src])
+        self.set_cmd('set_unit_behavior', [self.predefine.get('unit_behavior'), 0, self.src])
         time.sleep(1)
         if pwr_rst:
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'will power reset'})

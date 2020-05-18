@@ -12,8 +12,8 @@ from device import aceinna_device
 from driver import aceinna_driver
 from test_case import aceinna_test_case
 
-def main(debug_main = False):
-    with open('can_attribute.json') as json_data:
+def main(debug_main = False, dev_type = 'MTLT305D'):
+    with open('can_attribute_' + dev_type + '.json') as json_data:
         can_attribute = json.load(json_data)
     
     # input('0')
@@ -36,9 +36,9 @@ def main(debug_main = False):
         if debug_main: eval('input([k, i, j])', {'k':sys._getframe().f_code.co_name,'i':hex(i.sn_can), 'j':hex(i.src)})
         test_file = my_csv(os.path.join(os.getcwd(), 'data','result_{0:#X}_{1:#X}.csv'.format(i.src, i.sn_can)))
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
-        main_test.set_test_dev(i, fwnum=0x1301070000)  # need to be updated for each testing ----------input: 1
+        main_test.set_test_dev(i, fwnum=int(can_attribute['predefine']['fwnum'], 16))  # need to be updated for each testing ----------input: 1
         # input('22')
-        testitems = ['5.4.1', '5.4.2']
+        testitems = ['3.6']
         main_test.run_test_case(test_item=[]) # do single/multi items test in testitems list if needed
         # main_test.run_test_case()
     print('testing finished', time.time())
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     input('will start main()')
     try:
         print(time.time())
-        main(debug_main = False)  # open debug mode
+        main(debug_main = True, dev_type = 'OPEN335RI')  # open debug mode
     except Exception as e:
         print(e)
   

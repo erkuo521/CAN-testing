@@ -241,7 +241,7 @@ class aceinna_test_case():
 
     def verify_addr_saved(self, target_data): # 1.5 
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-        self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
         time.sleep(0.2)
         self.dev.set_cmd('save_config', [2]) # save and power reset
         time.sleep(1)
@@ -263,7 +263,7 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_list})
         original = int(addr_list[2][-4:], 16)
         #change addr and saved
-        self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
         time.sleep(0.2)
         self.dev.set_cmd('save_config', [2]) # save and power reset
         time.sleep(2)
@@ -280,7 +280,7 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = (new == int(target_data, 16))
 
         # back to original address
-        self.dev.set_cmd('set_unit_behavior', [2, 0, int(target_data, 16)])
+        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
         self.dev.driver.send_can_msg(0x18FF5900, [new, 2, 0, original])
         time.sleep(0.2)
         self.dev.driver.send_can_msg(0x18FF5100, [2, new]) # save and power reset

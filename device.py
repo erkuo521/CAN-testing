@@ -28,6 +28,7 @@ class aceinna_device():
         self.sn_can  = None
         self.default_confi = {}
         self.req_ext_id_templete = 0x18EAFF00
+        self.predefine = attribute_json['predefine']
         self.can_attribute = attribute_json['configuration']['can']
         self.driver = None
         self.debug = debug_mode

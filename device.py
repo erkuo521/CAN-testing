@@ -165,7 +165,7 @@ class aceinna_device():
         self.empty_data_pkt()
         time.sleep(2)
         # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()   
-        data = [src, (new_pgn >> 8) & 0xFF, new_pgn & 0x00FF]   
+        data = [00, (new_pgn >> 8) & 0xFF, new_pgn & 0x00FF]   # first byte is 00 to apply for FW update
         for i in range(5):   
             self.driver.send_can_msg(self.req_ext_id_templete, data) # data: [80 FF 52]
             time.sleep(0.2)

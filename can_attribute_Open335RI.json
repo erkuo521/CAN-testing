@@ -1,9 +1,9 @@
 {
     "name":"parameters for devices",
     "type":"OPEN335RI",
-    "test_items":["4.2.7"],
-    "start_idx": 39, 
-    "debug_mode":"TRUE",
+    "test_items":[],
+    "start_idx": 0, 
+    "debug_mode":"FALSE", 
     "predefine":{
         "fwnum":"0x0100010000",
         "types_data":5,

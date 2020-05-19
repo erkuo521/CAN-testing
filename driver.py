@@ -86,6 +86,7 @@ class aceinna_driver():
                 if msg['src'] in self.devs:
                     # if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[msg['src'], self.devs]})
                     instance_dev = self.devs[msg['src']]
+                    # if self.debug: eval('print([k, i])', {'k':sys._getframe().f_code.co_name, 'i':instance_dev != None})               
                     if instance_dev != None:
                         instance_dev.get_pdu_msg(msg)
                     else:

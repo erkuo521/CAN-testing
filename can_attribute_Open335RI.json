@@ -1,11 +1,18 @@
 {
     "name":"parameters for devices",
     "type":"OPEN335RI",
+    "test_items":["4.2.7"],
+    "start_idx": 39, 
+    "debug_mode":"TRUE",
     "predefine":{
-        "fwnum":"0x0100000000",
-        "unit_behavior": 7,
+        "fwnum":"0x0100010000",
+        "types_data":5,
+        "lpf_filter":[25, 25],
+        "unit_behavior": 1,
         "bits_unit_bhr": 4,
-        "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9", "4.1.7", "4.1.8"]
+        "bank_ps0": ["0x50", "0x51", "0x54", "0x00", "0x00", "0x00", "0x00"],
+        "bank_ps1": ["0x55", "0x56", "0x57", "0x58", "0x59", "0x00", "0x00"],
+        "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9", "4.1.7", "4.1.8", "5.1.6"]
     },
     "configuration":{
         "can":[
@@ -29,7 +36,7 @@
             {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request", "fb_length":3},
             {"fb_id":0, "name":"save_config_feedback",    "pgn": 65361, "type":"feedback"},
             {"fb_id":1, "name":"algo_rst_feedback",       "pgn": 65360, "type":"feedback"},
-            {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set"},
+            {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set", "restart_support":"TRUE"},
             {"set_id":1, "name":"algo_rst",        "ext_set_id":419385344, "type":"set"},
             {"set_id":2, "name":"set_pkt_rate",    "ext_set_id":419386624, "type":"set"},
             {"set_id":3, "name":"set_pkt_type",    "ext_set_id":419386880, "type":"set"},

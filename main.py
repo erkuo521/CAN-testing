@@ -12,15 +12,16 @@ from device import aceinna_device
 from driver import aceinna_driver
 from test_case import aceinna_test_case
 
-def main(debug_main = False, dev_type = 'MTLT305D'):
+# def main(debug_main = False, dev_type = 'MTLT305D'):
+def main(dev_type = 'MTLT305D'):    
     with open('can_attribute_' + dev_type + '.json') as json_data:
         can_attribute = json.load(json_data)
-    
-    # input('0')
+    debug_main = True if can_attribute['debug_mode'] == 'TRUE' else False
+    testitems = can_attribute['test_items'] # testitems = ['3.6']
+
     main_driver = aceinna_driver(debug_mode = debug_main)
     dev_nodes = main_driver.get_can_nodes()
     
-    # input('1')
     device_list = []
     for i in dev_nodes:
         ad = aceinna_device(i, attribute_json = can_attribute,debug_mode = debug_main)
@@ -29,18 +30,14 @@ def main(debug_main = False, dev_type = 'MTLT305D'):
         ad.update_sn()
         device_list.append(ad) # add each device instance to device_list
     if debug_main: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':len(device_list)})
-    # input('2')
-    # test_file = my_csv('result.csv')
+
     for i in device_list:
         print('start testing device_src:{0} device_sn:{1}'.format(hex(i.src), hex(i.sn_can)))
         if debug_main: eval('input([k, i, j])', {'k':sys._getframe().f_code.co_name,'i':hex(i.sn_can), 'j':hex(i.src)})
         test_file = my_csv(os.path.join(os.getcwd(), 'data','result_{0:#X}_{1:#X}.csv'.format(i.src, i.sn_can)))
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
-        main_test.set_test_dev(i, fwnum=int(can_attribute['predefine']['fwnum'], 16))  # need to be updated for each testing ----------input: 1
-        # input('22')
-        testitems = ['3.6']
-        main_test.run_test_case(test_item=[]) # do single/multi items test in testitems list if needed
-        # main_test.run_test_case()
+        main_test.set_test_dev(i, fwnum=int(can_attribute['predefine']['fwnum'], 16))  # need to be updated for each testing ----------input: 1        
+        main_test.run_test_case(test_item = testitems, start_idx = can_attribute['start_idx']) # do single/multi items test in testitems list if needed
     print('testing finished', time.time())
     
     return True
@@ -49,7 +46,8 @@ if __name__ == "__main__":
     input('will start main()')
     try:
         print(time.time())
-        main(debug_main = True, dev_type = 'OPEN335RI')  # open debug mode
+        # main(debug_main = False, dev_type = 'OPEN335RI')  # open debug mode
+        main(dev_type = 'OPEN335RI')
     except Exception as e:
         print(e)
   

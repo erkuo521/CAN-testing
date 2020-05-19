@@ -1,10 +1,17 @@
 {
     "name":"parameters for devices",
-    "type":"MTLT305D",    
+    "type":"MTLT305D",   
+    "test_items":[],
+    "start_idx": 0, 
+    "debug_mode":"FALSE", 
     "predefine":{
         "fwnum":"0x1301070000",
+        "types_data":5,
+        "lpf_filter":[25, 5],
         "unit_behavior": 2,
         "bits_unit_bhr": 5,
+        "bank_ps0": ["0x50", "0x00", "0x52", "0x53", "0x54", "0x6C", "0x00", "0x00"],
+        "bank_ps1": ["0x55", "0x56", "0x57", "0x58", "0x00", "0x00", "0x00", "0x00"],
         "exclude_list":[]
     },
     "configuration":{
@@ -28,7 +35,7 @@
             {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request", "fb_length":2},
             {"fb_id":0, "name":"save_config_feedback",    "pgn": 65361, "type":"feedback"},
             {"fb_id":1, "name":"algo_rst_feedback",       "pgn": 65360, "type":"feedback"},
-            {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set"},
+            {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set", "restart_support":"TRUE"},
             {"set_id":1, "name":"algo_rst",        "ext_set_id":419385344, "type":"set"},
             {"set_id":2, "name":"set_pkt_rate",    "ext_set_id":419386624, "type":"set"},
             {"set_id":3, "name":"set_pkt_type",    "ext_set_id":419386880, "type":"set"},

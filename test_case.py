@@ -117,7 +117,7 @@ class aceinna_test_case():
         self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x07'])
         self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', '0x1905'])
         self.test_case.append(['4.2.6', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
-        self.test_case.append(['4.2.7', 'set_unit_behavior', 'self.test_file.write([item, self.set_unit_behavior(targetdata), self.function_measure_data[key]])', ''])
+        self.test_case.append(['4.2.7', 'set_unit_behavior_new', 'self.test_file.write([item, self.set_unit_behavior_new(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.8', 'set_bank_ps1', 'self.test_file.write([item, self.set_bank_ps1(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.3', '', 'self.test_file.write([item])', ''])        
         self.test_case.append(['4.3.1', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x1F'])
@@ -131,7 +131,7 @@ class aceinna_test_case():
         self.test_case.append(['5.1.2', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata, saved_rst=True), self.function_measure_data[key]])', '0x0F'])
         self.test_case.append(['5.1.3', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata, saved_rst=True), self.function_measure_data[key]])', '0x0505'])
         self.test_case.append(['5.1.4', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata, saved_rst=True), self.function_measure_data[key]])', '0x0009'])
-        self.test_case.append(['5.1.5', 'set_unit_behavior', 'self.test_file.write([item, self.set_unit_behavior(targetdata, saved_rst=True), self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.1.5', 'set_unit_behavior_new', 'self.test_file.write([item, self.set_unit_behavior_new(targetdata, saved_rst=True), self.function_measure_data[key]])', ''])
         self.test_case.append(['5.1.6', 'set_hw_bit_ps', 'self.test_file.write([item, self.set_hw_bit_ps(targetdata, saved_rst=True), self.function_measure_data[key]])', '0x0000'])
         # self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         # self.test_case.append(['5.2.1', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata, nosaved_rst=True), self.function_measure_data[key]])', '0x01'])
@@ -363,7 +363,12 @@ class aceinna_test_case():
         return int(measure_data, 16) == int(target_data, 16)
 
     def test_unit_behavior(self, target_data, len_fb_bytes = 2): # 3.6, 4.1.10
+        '''
+        check unit behavior is same with predefine.get('unit_behavior')/tartet data value or not
+        '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.predefine.get('unit_behavior'))
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
@@ -380,7 +385,7 @@ class aceinna_test_case():
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits, 0x1F for 4 bits
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data
-        return (int(measure_data, 16) & bit_mask) == self.dev.predefine.get('unit_behavior')
+        return (int(measure_data, 16) & bit_mask) == int(target_data, 16)
     
     def test_fw_version(self, target_data): # 3.7, 4.1.1
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -479,7 +484,7 @@ class aceinna_test_case():
         if self.dev.type_name == 'MTLT305D':
             self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 1, self.dev.src])
         elif self.dev.type_name == 'OPEN335RI':
-            self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior')-1])
+            self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior') + pow(2, 2)])
         time.sleep(0.2)
 
         if nosaved_rst == True:
@@ -500,7 +505,7 @@ class aceinna_test_case():
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
-        len_fb_bytes = self.dev.get_item_json('unit_behavior')['fb_length']
+        len_fb_bytes = self.dev.get_item_json('pkt_type')['fb_length']
         feedback = payload[-(len_fb_bytes-1)*2:]
         if int(feedback, 16) != 7:
             nosc_set = False
@@ -539,8 +544,12 @@ class aceinna_test_case():
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
 
         # feedback = payload[-2:]
-        if self.dev.decode_behavior_num(int(feedback, 16))[0] != 0:
-            nosc_set = False
+        if self.dev.type_name == 'MTLT305D':
+            if self.dev.decode_behavior_num(int(feedback, 16))[0] != 0:
+                nosc_set = False
+        if self.dev.type_name == 'OPEN335RI':
+            if self.dev.decode_behavior_num(int(feedback, 16))[2] != 1:
+                nosc_set = False
         
         self.function_measure_data[sys._getframe().f_code.co_name] = nosc_set
         self.dev.set_to_default(pwr_rst = False)
@@ -694,6 +703,42 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits
         return (int(measure_data, 16) & bit_mask) == enabel_bit
+
+    def set_unit_behavior_new(self, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 #5.2.5
+        self.dev.set_to_default(pwr_rst = True)
+        set_unit_bhr = True
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        if self.test_unit_behavior(target_data = ''): # check default is right, then go on
+            # set unit value to what we want
+            bit_idx = 2 # start from 0
+            enable_val = self.dev.predefine.get('unit_behavior') + pow(2, bit_idx)
+            disable_val = 0
+            if self.dev.type_name == 'MTLT305D':
+                self.dev.set_cmd('set_unit_behavior', [enable_val, disable_val, self.dev.src])                
+            elif self.dev.type_name == 'OPEN335RI':
+                self.dev.set_cmd('set_unit_behavior', [enable_val])
+            time.sleep(0.2)
+            # restart if need
+            if saved_rst == True:
+                self.dev.set_cmd('save_config', [2]) # save and restart
+                time.sleep(1)
+            if nosaved_rst == True:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
+                time.sleep(1)
+            # check value is as expected or not
+            if self.test_unit_behavior(target_data = hex(enable_val)) == False:
+                set_unit_bhr = False
+            self.function_measure_data[sys._getframe().f_code.co_name] = self.function_measure_data.get('test_unit_behavior')  
+        else:
+            set_unit_bhr = False
+            test_value = self.function_measure_data.get('test_unit_behavior')
+            print(f'unit default value is not right, measure value:{test_value}')
+            self.function_measure_data[sys._getframe().f_code.co_name] = set_unit_bhr  
+        
+        return set_unit_bhr
+
+
 
     def set_bank_ps0(self, target_data, saved_rst = False, algo_rst=0x60, hw_bit=0x52, sw_bit=0x53, status_bit=0x54, hr_acc=0x6C): # 4.2.8
         '''
@@ -861,7 +906,7 @@ class aceinna_test_case():
         # disable_list      = [0x01, 0x02, 0x04, 0x08, 0x10]
         bhr_set_ok        = True
         bitsnum = self.dev.predefine['bits_unit_bhr']
-        enable_list, disable_list = [pow(2,x) for x in range(bitsnum)], [pow(2,x) for x in range(bitsnum)]
+        enable_list, disable_list = [pow(2, x) for x in range(bitsnum)], [pow(2,x) for x in range(bitsnum)]
         len_fb_bytes = self.dev.get_item_json('unit_behavior')['fb_length']
 
         for idx, value in enumerate(enable_list):

@@ -10,9 +10,17 @@
         "lpf_filter":[25, 5],
         "unit_behavior": 2,
         "bits_unit_bhr": 5,
-        "bank_ps0": ["0x50", "0x00", "0x52", "0x53", "0x54", "0x6C", "0x00", "0x00"],
-        "bank_ps1": ["0x55", "0x56", "0x57", "0x58", "0x00", "0x00", "0x00", "0x00"],
-        "exclude_list":[]
+        "unit_data_nosrc":["0x02", "0x00"],
+        "bank_ps0": {
+            "default":{"algo_rst":"0x50", "rse0":"0x00", "hw_bit":"0x52", "sw_bit":"0x53", "status":"0x54", "acc_hr":"0x6C", "rse1":"0x00", "rse2":"0x00"},
+            "try_idx":[0, 2, 3, 4, 5]
+        },
+        "bank_ps1": {
+            "default":{"pkt_rate":"0x55", "pkt_type":"0x56", "lpf_filter":"0x57", "orientation":"0x58", "unit_behavior":"0x59", "rse0":"0x00", "rse1":"0x00", "rse2":"0x00"},
+            "try_idx":[0, 1, 2, 3, 4]
+        },
+        "exclude_list":[],
+        "manual_check":["value is reasonable or not on all messages", "default orientation is right or not", "each bit of unit behavior setting valid actually or not"]
     },
     "configuration":{
         "can":[

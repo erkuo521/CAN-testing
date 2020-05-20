@@ -63,8 +63,8 @@ class aceinna_device():
         self.default_confi['lpf_filter'] = self.predefine.get('lpf_filter') if 'lpf_filter' in self.predefine else [25, 5] # lpf_rate, lpf_acc lpf_filter
         self.default_confi['orientation'] = 0
         self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 2
-        self.default_confi['bank_ps0'] = [int(x, 16) for x in self.predefine['bank_ps0']]
-        self.default_confi['bank_ps1'] = [int(x, 16) for x in self.predefine['bank_ps1']]
+        self.default_confi['bank_ps0'] = [int(x, 16) for x in list(self.predefine['bank_ps0']['default'].values())]
+        self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['bank_ps1']['default'].values())]
 
     def init_data_list(self):
         auto_list = [x for x in self.can_attribute if x['type'] == 'auto']

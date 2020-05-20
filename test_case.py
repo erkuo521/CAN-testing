@@ -109,7 +109,7 @@ class aceinna_test_case():
         self.test_case.append(['4.1.7', 'test_hw_bit', 'self.test_file.write([item, self.test_hw_bit(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.1.8', 'test_sw_bit', 'self.test_file.write([item, self.test_sw_bit(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.1.9', 'test_sensor_status', 'self.test_file.write([item, self.test_sensor_status(targetdata), self.function_measure_data[key]])', ['0x04', '0x06']])
-        self.test_case.append(['4.1.10', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', '0x02'])
+        self.test_case.append(['4.1.10', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.2.1', 'test_save_config', 'self.test_file.write([item, self.test_save_config(targetdata), self.function_measure_data[key]])', '0x010001'])
         self.test_case.append(['4.2.2', 'test_algo_rst', 'self.test_file.write([item, self.test_algo_rst(targetdata), self.function_measure_data[key]])', '0x010001'])
@@ -738,8 +738,6 @@ class aceinna_test_case():
         
         return set_unit_bhr
 
-
-
     def set_bank_ps0(self, target_data, saved_rst = False, algo_rst=0x60, hw_bit=0x52, sw_bit=0x53, status_bit=0x54, hr_acc=0x6C): # 4.2.8
         '''
         target_data: such as '0x0000' '0x0165'
@@ -783,6 +781,52 @@ class aceinna_test_case():
         else:
             self.function_measure_data[sys._getframe().f_code.co_name] = False
             return False
+
+    def set_try_ps(self, newps = 0x60, ps_type = None, try_idx = None): # 5.9.1-5.9.9
+        '''
+        try each ps by newps and check result is expected
+        ps_type = 'bank_ps0', try_idx = 0 should be in try_idx list of json
+        '''
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':newps})
+        ps_type = ['bank_ps0', 'bank_ps1'] if ps_type == None else [ps_type]
+        results = {}
+        for i in ps_type:
+            ps_dict = self.dev.predefine[i].get('ps_default')
+            cmd_name, ps_val = list(ps_dict.keys()), list(ps_dict.values())
+            idx_list = self.dev.predefine[i].get('try_idx')
+            try_idx = idx_list if (try_idx == None) and (try_idx in idx_list) else [try_idx]
+            for j in try_idx:
+                cmd_name = cmd_name[j]
+                item_dict = self.dev.get_item_json(namestr = cmd_name)
+                self.dev.set_cmd(i, ps_val[:j] + [100] + ps_val[j+1:])
+                time.sleep(0.2)
+                if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':results})
+                if item_dict.get('type') == 'set': # set cmd
+                    feedback = self.dev.set_get_feedback_payload(set_fb_name = cmd_name + '_feedback')
+                    feedback2 = self.dev.new_set_cmd(new_ps = newps, data = [0, self.dev.src])
+                    if (feedback != False) or (feedback2 == False):
+                        results[cmd_name] = False
+                    else:
+                        results[cmd_name] = True
+                elif item_dict.get('type') == 'request': # request cmd
+                    feedback = self.dev.request_cmd(cmd_name)
+                    feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                    if (feedback != False) or (feedback2 == False):
+                        results[cmd_name] = False
+                    else:
+                        results[cmd_name] = True
+                elif item_dict.get('type') == 'auto': # auto send data msg
+                    feedback = self.get_acc_hr(target_data='',back_default=False)
+                    feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                    if (feedback != False) or (feedback2 == False):
+                        results[cmd_name] = False
+                    else:
+                        results[cmd_name] = True
+                else:
+                    print(f'no this type cmd or msg in function {sys._getframe().f_code.co_name}') 
+        final_reslut = False if False in list(results.values()) else True
+        self.function_measure_data[sys._getframe().f_code.co_name] = final_reslut
+        return final_reslut         
 
     def get_acc_hr(self, target_data, back_default = True): # 4.3.5
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})

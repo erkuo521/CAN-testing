@@ -19,7 +19,7 @@
             "default":{"pkt_rate":"0x55", "pkt_type":"0x56", "lpf_filter":"0x57", "orientation":"0x58", "unit_behavior":"0x59", "rse0":"0x00", "rse1":"0x00", "rse2":"0x00"},
             "try_idx":[0, 1, 2, 3, 4]
         },
-        "exclude_list":[],
+        "exclude_list":["4.3.6"],
         "manual_check":["value is reasonable or not on all messages", "default orientation is right or not", "each bit of unit behavior setting valid actually or not"]
     },
     "configuration":{

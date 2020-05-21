@@ -7,6 +7,7 @@
     "predefine":{
         "fwnum":"0x1301070000",
         "types_data":5,
+        "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],
         "lpf_filter":[25, 5],
         "unit_behavior": 2,
         "bits_unit_bhr": 5,

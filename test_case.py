@@ -210,15 +210,15 @@ class aceinna_test_case():
         # self.test_case.append(['5.8.12', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         # self.test_case.append(['5.8.13', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['5.9.1', 'try_bank_ps0_list', 'self.test_file.write([item, self.try_bank_ps0_list(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.2', 'try_bank_ps0_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.3', 'try_bank_ps0_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.4', 'try_bank_ps0_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.5', 'try_bank_ps0_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.6', 'try_bank_ps1_list', 'self.test_file.write([item, self.try_bank_ps1_list(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.7', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.8', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        self.test_case.append(['5.9.9', 'try_bank_ps1_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])       
+        self.test_case.append(['5.9.1', 'set_try_ps', 'self.test_file.write([item, self.set_try_ps(), self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.2', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.3', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.4', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.5', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.6', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.7', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.8', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.9.9', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])       
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
 
@@ -385,6 +385,7 @@ class aceinna_test_case():
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits, 0x1F for 4 bits
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[bit_mask, measure_data]})
         return (int(measure_data, 16) & bit_mask) == int(target_data, 16)
     
     def test_fw_version(self, target_data): # 3.7, 4.1.1
@@ -506,7 +507,8 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         len_fb_bytes = self.dev.get_item_json('pkt_type')['fb_length']
-        feedback = payload[-(len_fb_bytes-1)*2:]
+        feedback = payload[-(len_fb_bytes-1)*2:]          
+        feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
         if int(feedback, 16) != 7:
             nosc_set = False
 
@@ -548,7 +550,7 @@ class aceinna_test_case():
             if self.dev.decode_behavior_num(int(feedback, 16))[0] != 0:
                 nosc_set = False
         if self.dev.type_name == 'OPEN335RI':
-            if self.dev.decode_behavior_num(int(feedback, 16))[2] != 1:
+            if self.dev.decode_behavior_num(int(feedback, 16))[2] == 1:
                 nosc_set = False
         
         self.function_measure_data[sys._getframe().f_code.co_name] = nosc_set
@@ -704,7 +706,7 @@ class aceinna_test_case():
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits
         return (int(measure_data, 16) & bit_mask) == enabel_bit
 
-    def set_unit_behavior_new(self, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 #5.2.5
+    def set_unit_behavior_new(self, targetdata, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 #5.2.5        
         self.dev.set_to_default(pwr_rst = True)
         set_unit_bhr = True
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
@@ -717,7 +719,7 @@ class aceinna_test_case():
                 self.dev.set_cmd('set_unit_behavior', [enable_val, disable_val, self.dev.src])                
             elif self.dev.type_name == 'OPEN335RI':
                 self.dev.set_cmd('set_unit_behavior', [enable_val])
-            time.sleep(0.2)
+            time.sleep(1)
             # restart if need
             if saved_rst == True:
                 self.dev.set_cmd('save_config', [2]) # save and restart
@@ -765,8 +767,12 @@ class aceinna_test_case():
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         self.dev.set_to_default()
+        time.sleep(3)
         pkt_rate, pkt_type, dig_filter, ori_request = 0x60, 0x56, 0x57, 0x58
-        data = [pkt_rate, pkt_type, dig_filter, ori_request]
+        if self.dev.type_name == 'MTLT305D':
+            data = [pkt_rate, pkt_type, dig_filter, ori_request, 0, 0, 0]
+        if self.dev.type_name == 'OPEN335RI':
+            data = [pkt_rate, pkt_type, dig_filter, ori_request, 0, 0]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
         if saved_rst == True:
@@ -782,49 +788,68 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = False
             return False
 
-    def set_try_ps(self, newps = 0x60, ps_type = None, try_idx = None): # 5.9.1-5.9.9
+    def set_try_ps(self, newps = 0x60, pstype = None, tryidx = None): # 5.9.1-5.9.9
         '''
         try each ps by newps and check result is expected
-        ps_type = 'bank_ps0', try_idx = 0 should be in try_idx list of json
+        ps_type = 'set_bank_ps0', try_idx = 0 should be in try_idx list of json
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':newps})
-        ps_type = ['bank_ps0', 'bank_ps1'] if ps_type == None else [ps_type]
+        ps_type = ['set_bank_ps0', 'set_bank_ps1'] if pstype == None else [pstype]
         results = {}
         for i in ps_type:
             ps_dict = self.dev.predefine[i].get('ps_default')
-            cmd_name, ps_val = list(ps_dict.keys()), list(ps_dict.values())
+            cmdname, psval = list(ps_dict.keys()), [int(x,16) for x in list(ps_dict.values())]
             idx_list = self.dev.predefine[i].get('try_idx')
-            try_idx = idx_list if (try_idx == None) and (try_idx in idx_list) else [try_idx]
-            for j in try_idx:
-                cmd_name = cmd_name[j]
-                item_dict = self.dev.get_item_json(namestr = cmd_name)
-                self.dev.set_cmd(i, ps_val[:j] + [100] + ps_val[j+1:])
-                time.sleep(0.2)
-                if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':results})
-                if item_dict.get('type') == 'set': # set cmd
-                    feedback = self.dev.set_get_feedback_payload(set_fb_name = cmd_name + '_feedback')
-                    feedback2 = self.dev.new_set_cmd(new_ps = newps, data = [0, self.dev.src])
-                    if (feedback != False) or (feedback2 == False):
-                        results[cmd_name] = False
+            try_idx = idx_list if tryidx == None else [tryidx]
+            try:
+                print(try_idx, 'ooooooooooo')
+                for j in try_idx:
+                    if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[i,j]})
+                    cmd_name = cmdname[j] # list out of range
+                    item_dict = self.dev.get_item_json(namestr = cmd_name)
+                    if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[j, results, cmd_name, item_dict, [hex(x) for x in psval]]})
+                    self.dev.set_cmd(i, psval[:j] + [newps] + psval[j+1:])
+                    time.sleep(0.2)
+                    if item_dict.get('type') == 'set': # set cmd
+                        feedback = self.dev.set_get_feedback_payload(set_fb_name = cmd_name + '_feedback')
+                        feedback2 = self.dev.new_set_cmd(new_ps = newps, data = [0, self.dev.src])
+                        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback2, type(feedback2)]})
+                        try:    
+                            if (feedback != False) or (feedback2 == False):
+                                results[cmd_name] = False
+                            else:
+                                results[cmd_name] = True
+                            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[ps_type, try_idx, results]})
+                        except Exception as e:
+                            print('001', j, type(j), cmd_name, feedback, results)
+                    elif item_dict.get('type') == 'request': # request cmd
+                        try:
+                            feedback = self.dev.request_cmd(cmd_name)
+                            feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                            if (feedback != False) or (feedback2 == False):
+                                results[cmd_name] = False
+                            else:
+                                results[cmd_name] = True
+                            print(ps_type, try_idx)
+                        except Exception as e:
+                            print('002',j, type(j), cmd_name, feedback, results)
+                    elif item_dict.get('type') == 'auto': # auto send data msg
+                        try:
+                            feedback = self.get_acc_hr(target_data='',back_default=False)
+                            feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                            if (feedback != False) or (feedback2 == False):
+                                results[cmd_name] = False
+                            else:
+                                results[cmd_name] = True
+                        except Exception as e:
+                            print('003', j, type(j), cmd_name, feedback, results)
                     else:
-                        results[cmd_name] = True
-                elif item_dict.get('type') == 'request': # request cmd
-                    feedback = self.dev.request_cmd(cmd_name)
-                    feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
-                    if (feedback != False) or (feedback2 == False):
-                        results[cmd_name] = False
-                    else:
-                        results[cmd_name] = True
-                elif item_dict.get('type') == 'auto': # auto send data msg
-                    feedback = self.get_acc_hr(target_data='',back_default=False)
-                    feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
-                    if (feedback != False) or (feedback2 == False):
-                        results[cmd_name] = False
-                    else:
-                        results[cmd_name] = True
-                else:
-                    print(f'no this type cmd or msg in function {sys._getframe().f_code.co_name}') 
+                        print(f'no this type cmd or msg in function {sys._getframe().f_code.co_name}') 
+
+            except Exception as e:
+                print(e, i, j, item_dict, feedback, feedback2, 'sfjkdsjfkdsjf')
         final_reslut = False if False in list(results.values()) else True
+        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':results})
         self.function_measure_data[sys._getframe().f_code.co_name] = final_reslut
         return final_reslut         
 
@@ -945,7 +970,7 @@ class aceinna_test_case():
         # check some behavior configuration items is set
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         self.dev.set_to_default()
-        time.sleep(1)
+        time.sleep(3)
         # enable_list       = [0x01, 0x02, 0x04, 0x08, 0x10]
         # disable_list      = [0x01, 0x02, 0x04, 0x08, 0x10]
         bhr_set_ok        = True
@@ -954,19 +979,25 @@ class aceinna_test_case():
         len_fb_bytes = self.dev.get_item_json('unit_behavior')['fb_length']
 
         for idx, value in enumerate(enable_list):
+            # input('clear cantest dbc')
             if self.dev.type_name == 'MTLT305D':
                 self.dev.set_cmd('set_unit_behavior', [value, 0, self.dev.src])
             elif self.dev.type_name == 'OPEN335RI':
                 self.dev.set_cmd('set_unit_behavior', [value])
-            time.sleep(0.2)
+            time.sleep(1)
+            # input('123')
             payload = self.dev.request_cmd('unit_behavior')
+            # input('123')
             if payload == False: 
                 bhr_set_ok = False
             else:
-                get_bhr = int(payload[-((len_fb_bytes-1)*2):], 16)
-                if self.dev.decode_behavior_num(get_bhr)[0] == 0:
+                feedback = payload[-((len_fb_bytes-1)*2):]
+                feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+
+                get_bhr = int(feedback, 16)
+                if self.dev.decode_behavior_num(get_bhr)[idx] == 0:
                     bhr_set_ok = False
-            if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':bhr_set_ok,'j':[idx, value]})
+            if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':bhr_set_ok,'j':[idx, value, payload]})
         
         if self.dev.type_name == 'MTLT305D':
             for idx, value in enumerate(disable_list):
@@ -1050,6 +1081,7 @@ class aceinna_test_case():
 
         self.function_measure_data[sys._getframe().f_code.co_name] = ps0_set_ok
         self.dev.set_to_default()
+        time.sleep(3)
         return ps0_set_ok
 
     def try_bank_ps1_list(self, target_data, pkt_rate = 0x75, pkt_type = 0x76, lpf_filter = 0x77, orientation = 0x78): # 5.9.6-5.9.9

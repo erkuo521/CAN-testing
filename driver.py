@@ -58,7 +58,7 @@ class aceinna_driver():
         self.thread_provide.start()
 
     def send_can_msg(self, id, data):
-        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[id] + data})
+        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[hex(id)] + [hex(x) for x in data]})
         return self.can.send_msg(id_int=id, data_list=data)
 
     def clollect_msg(self):

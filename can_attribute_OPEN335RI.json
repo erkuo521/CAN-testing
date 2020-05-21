@@ -1,25 +1,30 @@
 {
     "name":"parameters for devices",
     "type":"OPEN335RI",
-    "test_items":[],
-    "start_idx":0, 
-    "debug_mode":"FALSE", 
+
+    "test_items":["5.1.5"],
+    "start_idx": 0, 
+    "debug_mode":"TRUE", 
+
     "predefine":{
         "fwnum":"0x0100020000",
         "types_data":5,
+        "types_name":["ssi2", "rate", "accel", "rate_hr", "acc_hr"],
         "lpf_filter":[25, 25],
         "unit_behavior": 64,
         "bits_unit_bhr": 7,
         "unit_data_nosrc":["0x40"],
-        "bank_ps0": {
+        "set_bank_ps0": {
             "ps_default":{"algo_rst":"0x50", "rse0":"0x00", "rse1":"0x00", "rse2":"0x00", "status":"0x54", "rse3":"0x00", "rse4":"0x00"},
-            "try_idx":[0, 2]
+            "try_idx":[0, 4]
         },
-        "bank_ps1": {
+        "set_bank_ps1": {
             "ps_default":{"pkt_rate":"0x55", "pkt_type":"0x56", "lpf_filter":"0x57", "orientation":"0x58", "unit_behavior":"0x59", "rse0":"0x00", "rse1":"0x00"},
             "try_idx":[0, 1, 2, 3, 4]
         },
-        "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9", "4.1.7", "4.1.8", "5.1.6"],
+
+        "exclude_list":["1.5", "1.6", "1.7", "1.8", "1.9", "4.1.7", "4.1.8", "5.1.6", "5.2.6"],
+
         "manual_check":["value is reasonable or not on all messages", "default orientation is right or not", "each bit of unit behavior setting valid actually or not"]
     },
     "configuration":{

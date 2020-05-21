@@ -63,8 +63,8 @@ class aceinna_device():
         self.default_confi['lpf_filter'] = self.predefine.get('lpf_filter') if 'lpf_filter' in self.predefine else [25, 5] # lpf_rate, lpf_acc lpf_filter
         self.default_confi['orientation'] = 0
         self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 2
-        self.default_confi['bank_ps0'] = [int(x, 16) for x in list(self.predefine['bank_ps0']['default'].values())]
-        self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['bank_ps1']['default'].values())]
+        self.default_confi['bank_ps0'] = [int(x, 16) for x in list(self.predefine['set_bank_ps0']['ps_default'].values())]
+        self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['set_bank_ps1']['ps_default'].values())]
 
     def init_data_list(self):
         auto_list = [x for x in self.can_attribute if x['type'] == 'auto']
@@ -128,8 +128,8 @@ class aceinna_device():
 
         id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
         id_idx = pgn_des[id_name]
-        # if pdu_msg['pgn'] == 0xFF51 and self.debug:
-        #     if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[pgn_des, id_name, id_idx, pdu_msg]})
+        if pdu_msg['pgn'] == 0xFF59 and self.debug:
+            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[pgn_des, id_name, id_idx, pdu_msg]})
             #     print(self.auto_msg_queue[id_idx].qsize())
         if id_name == 'auto_id':  
             self.auto_msg_queue_lock[id_idx].acquire()
@@ -155,11 +155,12 @@ class aceinna_device():
             cmd_pgn = pgn_des['pgn']
             if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]}) 
             self.req_feedback_payload[cmd_idx] = None # set the value which correspond to cmd_idx in list(req_feedback_payload) to None
+            if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]}) 
             data = [00, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
             for i in range(3):
                 self.driver.send_can_msg(self.req_ext_id_templete | cmd_idx, data)  
                 time.sleep(0.4)          
-                if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':data + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]})            
+                if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[hex(x) for x in data] + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]})            
                 if self.req_feedback_payload[cmd_idx] != None:
                     return self.req_feedback_payload[cmd_idx]['payload']
                 else:
@@ -212,15 +213,22 @@ class aceinna_device():
                 else:
                     payload = payload_without_src + [self.src] 
                     self.driver.send_can_msg(ext_id, payload)
+                    time.sleep(0.1)  
+                    self.driver.send_can_msg(ext_id, payload)  
             elif ext_id in [419426304, 419426560]: # this is for ID 0x18FFF000 and 0x18FFF100
                 if self.type_name == 'MTLT305D':
                     payload = payload_without_src
                 elif self.type_name == 'OPEN335RI':
                     payload = [self.src] + payload_without_src
-                self.driver.send_can_msg(ext_id, payload)       
+                self.driver.send_can_msg(ext_id, payload) 
+                time.sleep(0.1)  
+                self.driver.send_can_msg(ext_id, payload)     
             else:
                 payload = [self.src] + payload_without_src
                 self.driver.send_can_msg(ext_id, payload) 
+                time.sleep(0.1)  
+                self.driver.send_can_msg(ext_id, payload)  
+
             return True
         else:
             pass # to be added
@@ -229,18 +237,21 @@ class aceinna_device():
         '''
         if ps changed by ps0 cmd and check whether new PGN feedback or not after send new_ps set cmd
         '''
+        if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         templeate_id = 0x18FF5000
         new_ext_id = (templeate_id & 0xFFFF00FF) + (new_ps << 8)
         new_pgn = (new_ext_id >> 8) & 0x00FFFF
         self.empty_data_pkt()        
         # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()        
-        self.driver.send_can_msg(new_ext_id, data) # 0x18FF6000, [00 80]
-        time.sleep(0.2)
-        while True:
+        for i in range(5):
+            self.driver.send_can_msg(new_ext_id, data) # 0x18FF6000, [00 80]
+            time.sleep(0.2)        
             rlt = self.get_payload_auto('unknow')
+            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[new_pgn, rlt]})
             if rlt == False:
                 break
             if rlt['pgn'] == new_pgn:
+                if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':rlt['payload']})
                 return rlt['payload']
         return False
 
@@ -250,20 +261,26 @@ class aceinna_device():
         unknow packets are used for new PGN HR_ACC/request feedback ms/set cmd feedback msg
         '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
-        pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == auto_name][0]
+        # pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == auto_name][0]
+        pgn_des = self.get_item_json(namestr = auto_name)
         id_idx = pgn_des['auto_id']
-        
-        for i in range(5):
-            self.auto_msg_queue_lock[id_idx].acquire()    
-            if self.auto_msg_queue[id_idx].empty():
-                self.auto_msg_queue_lock[id_idx].release()      
-                time.sleep(0.001)      
-            else:
-                msg = self.auto_msg_queue[id_idx].get()
-                self.auto_msg_queue_lock[id_idx].release()
-                if auto_name == 'unknow':
-                    return msg
-                return msg['payload']        
+        try: 
+            for i in range(5):
+                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':['before for', pgn_des, id_idx, len(self.auto_msg_queue), len(self.auto_msg_queue_lock)]})
+                self.auto_msg_queue_lock[id_idx].acquire()    
+                if self.auto_msg_queue[id_idx].empty():
+                    self.auto_msg_queue_lock[id_idx].release()      
+                    time.sleep(0.001)      
+                else:
+                    if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':[pgn_des, id_idx, len(self.auto_msg_queue), len(self.auto_msg_queue_lock)]})
+                    msg = self.auto_msg_queue[id_idx].get()
+                    self.auto_msg_queue_lock[id_idx].release()
+                    if auto_name == 'unknow':
+                        return msg
+                    return msg['payload']   
+            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':'for end'})      
+        except Exception as e:
+            print(e, i, len(self.auto_msg_queue), len(self.auto_msg_queue_lock))     
         return False
 
     def set_get_feedback_payload(self, set_fb_name):
@@ -304,7 +321,7 @@ class aceinna_device():
         exist_list = [0] * type_num
         self.empty_data_pkt()   
 
-        idx_list = [self.get_item_json(x)['auto_id'] for x in ['ssi2', 'rate', 'accel', 'ssi', 'acc_hr']]
+        idx_list = [self.get_item_json(x)['auto_id'] for x in self.predefine.get('types_name')]
         if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:'})        
         time.sleep(2) # wait 1s to receive packets again
 
@@ -412,6 +429,8 @@ class aceinna_device():
      
     def set_to_default(self, pwr_rst = True): # back to default confi and power cycle 
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':['pwr_reset_request:',pwr_rst]})
+        for i in ['bank_ps0', 'bank_ps1']:
+            self.set_cmd('set_' + i, self.default_confi[i])
         payload = self.request_cmd('unit_behavior')
         for i in range(3):   # some times unit will no feedback for 80FF59 Request, need to restart by SW or manualy restart in below
             if payload == False: 
@@ -419,7 +438,7 @@ class aceinna_device():
                 time.sleep(0.4)
                 payload = self.request_cmd('unit_behavior')
         while payload == False:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+            while input('23need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(1)   
             payload = self.request_cmd('unit_behavior')

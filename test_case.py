@@ -10,26 +10,18 @@ class aceinna_test_case():
         self.dev = None
         self.debug = debug_mode
         self.fw_num = None
-        # self.dev = aceinna_device(80)  # need to be delete
-        self.test_file = testfile # csv write and read
-        # self.test_start_row = 98       
-        # self.test_items = self.test_file.get_value(range_select = 'A98:A300')
-        # self.des_col = 4 # D- column
-        
+        self.test_file = testfile # csv write and read        
         self.test_case = []
         self.init_test_dict()
         self.function_measure_data = {}
 
-    def set_test_dev(self, dev_instance, fwnum): 
-        '''
-        fwnum: 0x1301060005
-        '''
+    def set_test_dev(self, dev_instance, fwnum):        
         self.dev = dev_instance
         self.fw_num = fwnum
         
     def run_test_case(self, test_item = [], start_idx = 0): 
         '''
-        test_item = '1.7', only running the items or will test all items
+        main function: to run the test functions which listed in test_case list
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[len(self.test_case), test_item]})
         self.dev.empty_data_pkt()
@@ -40,28 +32,24 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'begin testing'})
         if len(test_item) == 0:
             for idx,i in enumerate(self.test_case):
-                print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
-                if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
-                if i[0] in self.dev.predefine.get('exclude_list'):
+                if i[0] in self.dev.predefine.get('exclude_list'): 
+                    # not running the test function which in exclude list
                     self.test_file.write([i[0], 'N/A', 'N/A'])
-                    continue
+                    continue                
                 if idx > (start_idx-2):
+                    print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
+                    if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
                     if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
                     elif i[1] == 'manual':
                         eval(i[2], {'self':self, 'item':i[0], 'sp':i[3], 'other_type':i[1]})  
                     else:
                         eval(i[2], {'self':self, 'item':i[0]})
-                    time.sleep(0.5)
         else:
             for idx,i in enumerate(self.test_case):
                 if i[0] in test_item:
                     print(i[0], 'idx:', idx, ' src: ', hex(self.dev.src))
                     if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})                    # row = self.test_items.index(i[0]) + self.test_start_row
-                    # cell_mea = (row, self.des_col)
-                    # cell_rlt = (row, self.des_col + 1)
-                    # print(eval('self.test_ecu_id(targetdata)', {'self':self,'targetdata':i[3]}))
-                    # print(eval('self.function_measure_data[key]', {'self':self, 'key':i[1]}))
                     if i[1] != 'manual' and i[1] != '':
                         eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
                     elif i[1] == 'manual':
@@ -70,6 +58,10 @@ class aceinna_test_case():
                         eval(i[2], {'self':self, 'item':i[0]})  
 
     def init_test_dict(self): # ['item', 'function', 'target']
+        '''
+        add functions to test_case list, which include: sequency number of test item, function name, 
+        exacuatable sentence and input values.
+        '''
         self.test_case.append(['1.1', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['1.2', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['1.3', 'get_dev_src', 'self.test_file.write([item, self.get_dev_src(targetdata), self.function_measure_data[key]])', '0x80'])
@@ -802,7 +794,6 @@ class aceinna_test_case():
             idx_list = self.dev.predefine[i].get('try_idx')
             try_idx = idx_list if tryidx == None else [tryidx]
             try:
-                print(try_idx, 'ooooooooooo')
                 for j in try_idx:
                     if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[i,j]})
                     cmd_name = cmdname[j] # list out of range
@@ -814,40 +805,31 @@ class aceinna_test_case():
                         feedback = self.dev.set_get_feedback_payload(set_fb_name = cmd_name + '_feedback')
                         feedback2 = self.dev.new_set_cmd(new_ps = newps, data = [0, self.dev.src])
                         if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[feedback2, type(feedback2)]})
-                        try:    
-                            if (feedback != False) or (feedback2 == False):
-                                results[cmd_name] = False
-                            else:
-                                results[cmd_name] = True
-                            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[ps_type, try_idx, results]})
-                        except Exception as e:
-                            print('001', j, type(j), cmd_name, feedback, results)
+                        if (feedback != False) or (feedback2 == False):
+                            results[cmd_name] = False
+                        else:
+                            results[cmd_name] = True
+                        if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[ps_type, try_idx, results]})
                     elif item_dict.get('type') == 'request': # request cmd
-                        try:
-                            feedback = self.dev.request_cmd(cmd_name)
-                            feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
-                            if (feedback != False) or (feedback2 == False):
-                                results[cmd_name] = False
-                            else:
-                                results[cmd_name] = True
-                            print(ps_type, try_idx)
-                        except Exception as e:
-                            print('002',j, type(j), cmd_name, feedback, results)
+                        feedback = self.dev.request_cmd(cmd_name)
+                        feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                        if (feedback != False) or (feedback2 == False):
+                            results[cmd_name] = False
+                        else:
+                            results[cmd_name] = True
+                        print(ps_type, try_idx)
+                        
                     elif item_dict.get('type') == 'auto': # auto send data msg
-                        try:
-                            feedback = self.get_acc_hr(target_data='',back_default=False)
-                            feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
-                            if (feedback != False) or (feedback2 == False):
-                                results[cmd_name] = False
-                            else:
-                                results[cmd_name] = True
-                        except Exception as e:
-                            print('003', j, type(j), cmd_name, feedback, results)
+                        feedback = self.get_acc_hr(target_data='',back_default=False)
+                        feedback2 = self.dev.new_request_cmd(src = 0, new_pgn = 0xFF00 + newps)
+                        if (feedback != False) or (feedback2 == False):
+                            results[cmd_name] = False
+                        else:
+                            results[cmd_name] = True
                     else:
                         print(f'no this type cmd or msg in function {sys._getframe().f_code.co_name}') 
-
             except Exception as e:
-                print(e, i, j, item_dict, feedback, feedback2, 'sfjkdsjfkdsjf')
+                print(e, i, j, item_dict, feedback, feedback2)
         final_reslut = False if False in list(results.values()) else True
         if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':results})
         self.function_measure_data[sys._getframe().f_code.co_name] = final_reslut
@@ -1015,29 +997,6 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok      
         return bhr_set_ok
 
-    def try_unit_bhr_list_old(self, target_data):  # invalid now
-        # check some behavior configuration items is set
-        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-        enable_list       = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20]
-        disable_list      = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20]
-        bhr_set_ok        = True
-        for value in enable_list:
-            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':'enabel_bit list'})
-            if self.set_unit_behavior(target_data = hex(value)) == False:
-                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':value})
-                if self.debug: input('set behavior failed')
-                bhr_set_ok = False
-        if bhr_set_ok == False:
-            self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok 
-            return bhr_set_ok
-        for value in disable_list:
-            print(bhr_set_ok)
-            if self.debug: eval('print(k, i, set_ok)', {'k':sys._getframe().f_code.co_name,'i':'disable_bit list', 'set_ok':bhr_set_ok})
-            if self.set_unit_behavior(target_data = '0x00', disable_bit = value) == False:
-                bhr_set_ok = False   
-        self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok      
-        return bhr_set_ok
-
     def try_bank_ps0_list(self, target_data, algo_rst=0x60, hw_bit=0x62, sw_bit=0x63, status_bit=0x64, hr_acc=0x5C): # 5.9.1-5.9.5
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         self.dev.set_to_default(pwr_rst = False)
@@ -1164,6 +1123,30 @@ class aceinna_test_case():
 
 
 '''
+
+    def try_unit_bhr_list_old(self, target_data):  # invalid now
+        # check some behavior configuration items is set
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        enable_list       = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20]
+        disable_list      = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20]
+        bhr_set_ok        = True
+        for value in enable_list:
+            if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':'enabel_bit list'})
+            if self.set_unit_behavior(target_data = hex(value)) == False:
+                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':value})
+                if self.debug: input('set behavior failed')
+                bhr_set_ok = False
+        if bhr_set_ok == False:
+            self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok 
+            return bhr_set_ok
+        for value in disable_list:
+            print(bhr_set_ok)
+            if self.debug: eval('print(k, i, set_ok)', {'k':sys._getframe().f_code.co_name,'i':'disable_bit list', 'set_ok':bhr_set_ok})
+            if self.set_unit_behavior(target_data = '0x00', disable_bit = value) == False:
+                bhr_set_ok = False   
+        self.function_measure_data[sys._getframe().f_code.co_name] = bhr_set_ok      
+        return bhr_set_ok
+
 # feedback = self.save_confi_msg_queue.get()['payload']
 # fb_type = int(feedback[:2], 16)
 # fb_result = int(feedback[-2:], 16)                

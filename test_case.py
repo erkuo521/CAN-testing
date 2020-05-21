@@ -215,13 +215,17 @@ class aceinna_test_case():
         self.test_case.append(['6', 'test_save_file', 'self.test_file.write([item, self.test_save_file(targetdata), self.function_measure_data[key]])', ''])
 
     def test_ecu_id(self, target_data): # 1.1, 1.2, 3.8 4.1.6
+        '''
+        get ecu_id by send request cmd, to check whether target_data in it or not
+        '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         feedback = self.dev.request_cmd('ecu_id').upper() 
         measure_data = "0x{0}".format(feedback)     
+        # save function result to function_measure_data dict, 
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return target_data in measure_data
 
-    def get_dev_src(self, target_data): # 1.3
+    def get_dev_src(self, target_data): # 1.3        
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         feedback = self.dev.src
         measure_data = "{0:#x}".format(feedback)

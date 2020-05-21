@@ -47,13 +47,15 @@ class aceinna_device():
         self.driver = driver_instance
 
     def update_sn(self):
+        '''
+        calc sn number, which include last 5 fugures in hex format sn(on housing surface). 
+        '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         ecu_id_payload = self.request_cmd(cmd_name = 'ecu_id')
         # if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':ecu_id_payload})
         high_16bits_value = int(ecu_id_payload[-2:] + ecu_id_payload[-4:-2], 16) << 5
         low_5bits_value = int(ecu_id_payload[-6:-4], 16) >> 3
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':ecu_id_payload})
-
         self.sn_can = high_16bits_value + low_5bits_value  # it is the last 5 figures in whole hex_sn.
     
     def init_default_confi(self):
@@ -67,9 +69,12 @@ class aceinna_device():
         self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['set_bank_ps1']['ps_default'].values())]
 
     def init_data_list(self):
+        '''
+        based on JSON file, create several queues and locks for auto-send data
+        create list for request cmd feedback and set cmd feedbacks, correspond to idx in each json item
+        '''
         auto_list = [x for x in self.can_attribute if x['type'] == 'auto']
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':auto_list})
-
         request_list = [x for x in self.can_attribute if (x['type'] == 'request')]
         feedback_list = [x for x in self.can_attribute if (x['type'] == 'feedback')]
         for i in range(len(auto_list)):
@@ -81,6 +86,9 @@ class aceinna_device():
             self.set_feedback_payload.append(None)
     
     def empty_data_pkt(self):
+        '''
+        empty all queues and all request and set feedback lists
+        '''
         for idx,item in enumerate(self.auto_msg_queue):
             self.auto_msg_queue_lock[idx].acquire()            
             item.queue.clear()
@@ -92,15 +100,18 @@ class aceinna_device():
         time.sleep(0.2)
 
     def get_pdu_msg(self, msg_input): # CAN msg
+        '''
+        called by driver, receive the msg which SA is self.src
+        '''
         if msg_input['src'] == self.src:    
             self.put_msg(msg_input.copy())
-        else:
-            pass  # to be added
 
-    def get_item_json(self, namestr = None, pgnnum = None, extsetid = None):        
+    def get_item_json(self, namestr = None, pgnnum = None, extsetid = None): 
+        '''
+        return json item dict which you selected by name/pgnnum/extsetid
+        '''       
         if namestr != None:
             return [x for x in self.can_attribute if x['name'] == namestr][0]
-
         if pgnnum != None:
             pgn_list = [x for x in self.can_attribute if 'pgn' in x]
             pgn_des = [x for x in pgn_list if x['pgn'] == pgnnum]
@@ -108,29 +119,19 @@ class aceinna_device():
                 return [x for x in pgn_list if x['pgn'] == 'None'][0]  
             else:
                 return pgn_des[0]
-
         if extsetid != None:
             pgn_list = [x for x in self.can_attribute if 'ext_set_id' in x]
             return [x for x in pgn_list if x['ext_set_id'] == extsetid][0]
 
-        # pgn_list = [x for x in self.can_attribute if x['name'] == 'None']
-        # pgn_des = [x for x in pgn_list if x['pgn'] == 'None'][0]
-
-        # id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
-        # id_idx = pgn_des[id_name] 
-        # return pgn_des, id_name, id_idx
-
     def put_msg(self, pdu_msg):
-        # pgn_list = [x for x in self.can_attribute if 'pgn' in x]
-        # pgn_des_list = [x for x in pgn_list if x['pgn'] == pdu_msg['pgn']]
-        # pgn_des = pgn_des_list[0] if len(pgn_des_list) else [x for x in pgn_list if x['pgn'] == 'None'][0]  
-        pgn_des = self.get_item_json(pgnnum = pdu_msg['pgn'])      
-
+        '''
+        put received msg into correspond queue or list, based on pgn and right json item dict
+        '''
+        pgn_des = self.get_item_json(pgnnum = pdu_msg['pgn'])
         id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
         id_idx = pgn_des[id_name]
-        if pdu_msg['pgn'] == 0xFF59 and self.debug:
-            if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[pgn_des, id_name, id_idx, pdu_msg]})
-            #     print(self.auto_msg_queue[id_idx].qsize())
+        # if pdu_msg['pgn'] == 0xFF59 and self.debug: # debug whether one msg get or not
+        #     if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[pgn_des, id_name, id_idx, pdu_msg]})
         if id_name == 'auto_id':  
             self.auto_msg_queue_lock[id_idx].acquire()
             self.auto_msg_queue[id_idx].put(pdu_msg)
@@ -140,16 +141,15 @@ class aceinna_device():
         elif 'fb_id' in pgn_des:
             self.set_feedback_payload[id_idx] = pdu_msg  
             # if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':self.set_feedback_payload[id_idx]})
-
+        else:
+            pass
 
     def request_cmd(self, cmd_name):
         '''
-        send get cmd based on cmd_type, and return feedback
-        cmd_type should in ['fw_version', 'ecu_id', 'hw_bit', 'sw_bit', 'status', 'pkt_rate', 'pkt_type', 'lpf_filter', 'orientation', 'unit_behavior']
+        send cmd and get feedback, based on cmd_type. refer to json
+        cmd_names are ['fw_version', 'ecu_id', 'hw_bit', 'sw_bit', 'status', 'pkt_rate', 'pkt_type', 'lpf_filter', 'orientation', 'unit_behavior']
         '''
-        # pgn_des = [x for x in self.can_attribute if x['type'] == 'request' and x['name'] == cmd_name][0]
         pgn_des = self.get_item_json(namestr = cmd_name)
-
         if len(pgn_des):
             cmd_idx = pgn_des['req_id']
             cmd_pgn = pgn_des['pgn']
@@ -171,13 +171,12 @@ class aceinna_device():
 
     def new_request_cmd(self, src, new_pgn):
         '''
-        if new pgn changed and check whether new PGN feedback or not after send new_pgn request
-        return new pgn msg
+        if new ps changed and check whether new ps-PGN feedback or not after send new_pgn request
+        return new ps-pgn msg payload
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[src, hex(new_pgn)]})
         self.empty_data_pkt()
         time.sleep(2)
-        # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()   
         data = [00, (new_pgn >> 8) & 0xFF, new_pgn & 0x00FF]   # first byte is 00 to apply for FW update
         for i in range(3):   
             self.driver.send_can_msg(self.req_ext_id_templete, data) # data: [80 FF 52]
@@ -190,11 +189,10 @@ class aceinna_device():
                     return rlt['payload']
         return False
 
-
     def set_cmd(self, cmd_name, payload_without_src):
         '''
         cmd_name: ['save_config', 'algo_rst', 'set_pkt_rate','set_pkt_type', 'set_lpf_filter', 'set_orientation', 'set_unit_behavior', 'set_bank_ps0', 'set_bank_ps1']
-        cmd_name should be in reference list; 
+        cmd_name should be in reference list;  refer to json
         payload_without_src must be a ***list***. like [00] for [00, 80(added by program automatically)];
         for save_config, payload of byte-0: Request or Response or Reset(save and power cycel); 
         '''
@@ -228,21 +226,19 @@ class aceinna_device():
                 self.driver.send_can_msg(ext_id, payload) 
                 time.sleep(0.1)  
                 self.driver.send_can_msg(ext_id, payload)  
-
             return True
         else:
             pass # to be added
 
     def new_set_cmd(self, new_ps, data):
         '''
-        if ps changed by ps0 cmd and check whether new PGN feedback or not after send new_ps set cmd
+        after ps changed by ps cmd, check whether new ps-PGN feedback or not after send new_ps set cmd
         '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         templeate_id = 0x18FF5000
         new_ext_id = (templeate_id & 0xFFFF00FF) + (new_ps << 8)
         new_pgn = (new_ext_id >> 8) & 0x00FFFF
         self.empty_data_pkt()        
-        # pgn_des, id_name, id_idx = self.get_nonoequeue_idx()        
         for i in range(5):
             self.driver.send_can_msg(new_ext_id, data) # 0x18FF6000, [00 80]
             time.sleep(0.2)        
@@ -257,11 +253,10 @@ class aceinna_device():
 
     def get_payload_auto(self, auto_name):
         '''
-        auto_name:'ssi2', 'rate', 'accel', 'addr', 'ssi', 'acc_hr', 'unknow'
-        unknow packets are used for new PGN HR_ACC/request feedback ms/set cmd feedback msg
+        auto_name:'ssi2', 'rate', 'accel', 'addr', 'ssi', 'acc_hr', 'unknow', refer to json
+        unknow packets are used for new PGNs(acc_hr/rate_hr/new request feedback msg/new set cmd feedback msg
         '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
-        # pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == auto_name][0]
         pgn_des = self.get_item_json(namestr = auto_name)
         id_idx = pgn_des['auto_id']
         try: 
@@ -306,36 +301,30 @@ class aceinna_device():
         return False
 
     def measure_pkt_type(self, type_num = 5):
+        '''
+        based on types_data and types_name in json, to calc actual msg 
+        '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         payload = self.request_cmd('pkt_rate')
         while payload == False:
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 time.sleep(1)
-            payload = self.request_cmd('pkt_rate')
-            
+            payload = self.request_cmd('pkt_rate')            
         odr_idx = int(payload[-2:], 16)
         time.sleep(0.2)
         self.set_cmd('set_pkt_rate', [1])
         time.sleep(0.2)
-        # slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
         exist_list = [0] * type_num
         self.empty_data_pkt()   
-
         idx_list = [self.get_item_json(x)['auto_id'] for x in self.predefine.get('types_name')]
         if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:'})        
         time.sleep(2) # wait 1s to receive packets again
 
-        for i in range(type_num):
+        for i in range(type_num): # give right value to each type value in type list
             exist_list[i]  = pow(2, i) if (self.auto_msg_queue[idx_list[i]].qsize() > 0) else 0
-        # slope_exist       = 1 if (self.auto_msg_queue[idx_list[0]].qsize() > 0) else 0
-        # rate_exist        = 2 if self.auto_msg_queue[idx_list[1]].qsize() > 0 else 0
-        # acc_exist         = 4 if self.auto_msg_queue[idx_list[2]].qsize() > 0 else 0
-        # angle_ssi_exist   = 8 if self.auto_msg_queue[idx_list[3]].qsize() > 0 else 0
-        # hr_acc_exist      = 16 if self.auto_msg_queue[idx_list[4]].qsize() > 0 else 0  
-        # list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
+
         sumexist = sum(exist_list)
         if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:','m':exist_list})
-        # eval('print(k,l,m )',{'k':1,'l':'exist','m':2})
         if sumexist == 0 & self.debug:
             if self.debug: input('sumexist of pkt_type is o')
         self.set_cmd('set_pkt_rate', [odr_idx])
@@ -345,26 +334,25 @@ class aceinna_device():
     def measure_pkt_rate(self): 
         ''' 
         measure ODR, open the recording and set right packet type 
-        measure 5s, calc the received msg
+        measure 5s, calc the average of received accel msg numbers
         ''' 
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         self.set_cmd('set_pkt_type', [7])
         time.sleep(0.2)
-
-        # pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == 'ssi2'][0]
         pgn_des = self.get_item_json(namestr = 'accel')
         id_idx = pgn_des['auto_id']    
         self.auto_msg_queue_lock[id_idx].acquire()     
         self.auto_msg_queue[id_idx].queue.clear() 
         self.auto_msg_queue_lock[id_idx].release() 
-
         time.sleep(5)
-        # print(self.auto_msg_queue[id_idx].qsize())
         odr = self.auto_msg_queue[id_idx].qsize()/5 
         if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':odr})
         return odr    
 
     def decode_pke_type_num(self, pkt_num):
+        '''
+        check each bit value of pkt_num
+        '''
         slope_exist       = True if ((pkt_num >> (1-1)) & 1) == 1 else False
         rate_exist        = True if ((pkt_num >> (2-1)) & 1) == 1 else False
         acc_exist         = True if ((pkt_num >> (3-1)) & 1) == 1 else False
@@ -374,14 +362,8 @@ class aceinna_device():
 
     def decode_behavior_num(self, behavior_num):
         bitsnum = self.predefine['bits_unit_bhr']
+        # get each bit value, idx 0 is LSB
         list2 = [((behavior_num >> (x)) & 1) for x in range(bitsnum)]
-        # over_range       = ((behavior_num >> (1-1)) & 1)
-        # dyna_motion      = ((behavior_num >> (2-1)) & 1)
-        # uncorr_rate      = ((behavior_num >> (3-1)) & 1)
-        # swap_rateXY      = ((behavior_num >> (4-1)) & 1)
-        # autobaud_dete    = ((behavior_num >> (5-1)) & 1)
-        # can_term_resistor= ((behavior_num >> (6-1)) & 1)
-        # list2 = [over_range, dyna_motion, uncorr_rate, swap_rateXY, autobaud_dete, can_term_resistor]
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':list2})
         return list2
 
@@ -424,10 +406,13 @@ class aceinna_device():
         wx = wx_wy_wz[0] * (1/128.0) - 250.0
         wy = wx_wy_wz[1] * (1/128.0) - 250.0
         wz = wx_wy_wz[2] * (1/128.0) - 250.0  
-
         return 'Time: {3:18.6f} WX  : {0:6.2f} WY   : {1:6.2f} WZ: {2:6.2f}'.format(wx,wy,wz,msg.timestamp)
      
     def set_to_default(self, pwr_rst = True): # back to default confi and power cycle 
+        '''
+        set ps cmd to recover all ps cmd, then check unit_behavior cmd to confirm 
+        unit is working well, and then set default configurations
+        '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':['pwr_reset_request:',pwr_rst]})
         for i in ['bank_ps0', 'bank_ps1']:
             self.set_cmd('set_' + i, self.default_confi[i])
@@ -464,6 +449,44 @@ class aceinna_device():
             self.set_cmd('save_config', [2]) # save and power reset
             time.sleep(1)
         return True  
+
+'''
+        # pgn_list = [x for x in self.can_attribute if x['name'] == 'None']
+        # pgn_des = [x for x in pgn_list if x['pgn'] == 'None'][0]
+        # id_name = [x for x in ['auto_id', 'req_id', 'fb_id'] if x in pgn_des][0]
+        # id_idx = pgn_des[id_name] 
+        # return pgn_des, id_name, id_idx
+
+        # pgn_list = [x for x in self.can_attribute if 'pgn' in x]
+        # pgn_des_list = [x for x in pgn_list if x['pgn'] == pdu_msg['pgn']]
+        # pgn_des = pgn_des_list[0] if len(pgn_des_list) else [x for x in pgn_list if x['pgn'] == 'None'][0]  
+
+
+        #     print(self.auto_msg_queue[id_idx].qsize())
+
+        # pgn_des = [x for x in self.can_attribute if x['type'] == 'request' and x['name'] == cmd_name][0]
+
+        # pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == auto_name][0]
+
+        # slope_exist       = 1 if (self.auto_msg_queue[idx_list[0]].qsize() > 0) else 0
+        # rate_exist        = 2 if self.auto_msg_queue[idx_list[1]].qsize() > 0 else 0
+        # acc_exist         = 4 if self.auto_msg_queue[idx_list[2]].qsize() > 0 else 0
+        # angle_ssi_exist   = 8 if self.auto_msg_queue[idx_list[3]].qsize() > 0 else 0
+        # hr_acc_exist      = 16 if self.auto_msg_queue[idx_list[4]].qsize() > 0 else 0  
+        # list1 = [slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist]
+        # slope_exist, rate_exist, acc_exist, angle_ssi_exist, hr_acc_exist = 0, 0, 0, 0, 0
+
+        # pgn_des = [x for x in self.can_attribute if x['type'] == 'auto' and x['name'] == 'ssi2'][0]
+
+        # over_range       = ((behavior_num >> (1-1)) & 1)
+        # dyna_motion      = ((behavior_num >> (2-1)) & 1)
+        # uncorr_rate      = ((behavior_num >> (3-1)) & 1)
+        # swap_rateXY      = ((behavior_num >> (4-1)) & 1)
+        # autobaud_dete    = ((behavior_num >> (5-1)) & 1)
+        # can_term_resistor= ((behavior_num >> (6-1)) & 1)
+        # list2 = [over_range, dyna_motion, uncorr_rate, swap_rateXY, autobaud_dete, can_term_resistor]
+
+'''
 
 
 

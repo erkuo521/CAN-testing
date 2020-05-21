@@ -35,7 +35,7 @@ class aceinna_driver():
         self.thread_provide = threading.Thread(target=self.provide_msg)
         self.start_record()
 
-        self.uart = aceinna_uart()        
+        self.uart = aceinna_uart()     # init port and baudrate when use    
 
     def get_can_nodes(self):
         '''
@@ -54,6 +54,9 @@ class aceinna_driver():
         return [x for x in self.can_nodes if x in range(0x80, 0x100)] # range check[128, 256) 
 
     def start_record(self):
+        '''
+        start 2 threads to collect msgs and provider to right dev
+        '''
         self.thread_put.start()
         self.thread_provide.start()
 
@@ -93,6 +96,9 @@ class aceinna_driver():
                         pass  # to be added
 
     def register_dev(self, dev_src, instance_dev):
+        '''
+        all devs registered in driver
+        '''
         if dev_src in self.devs:
             return False
         else:

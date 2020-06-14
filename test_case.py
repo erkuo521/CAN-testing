@@ -39,9 +39,8 @@ class aceinna_test_case():
                 try:
                     if i[0] in self.dev.predefine.get('exclude_list'): 
                         # not running the test function which in exclude list
-                        self.test_file.write([i[0], 'N/A', 'N/A'])
-                        continue                
-                    if idx > (start_idx-2):
+                        self.test_file.write([i[0], 'N/A', 'N/A'])                
+                    if idx > (start_idx-2) and (i[0] not in self.dev.predefine.get('exclude_list')):
                         print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
                         if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
                         if i[1] != 'manual' and i[1] != '':
@@ -77,8 +76,8 @@ class aceinna_test_case():
         self.test_case.append(['1.5', 'verify_addr_saved', 'self.test_file.write([item, self.verify_addr_saved(targetdata), self.function_measure_data[key]])', '0x87'])
         self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
-        # self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
-        # self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
+        self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['1.8', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['1.9', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
@@ -89,8 +88,8 @@ class aceinna_test_case():
         self.test_case.append(['2.4', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['3', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['3.1', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', '0x01'])
-        self.test_case.append(['3.2', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', '0x07'])
+        self.test_case.append(['3.1', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
+        self.test_case.append(['3.2', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.3', 'test_lpf_rate', 'self.test_file.write([item, self.test_lpf_rate(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.4', 'test_lpf_acc', 'self.test_file.write([item, self.test_lpf_acc(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
@@ -101,8 +100,8 @@ class aceinna_test_case():
         self.test_case.append(['4', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.1', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.1.1', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', '0x1301060004'])
-        self.test_case.append(['4.1.2', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', '0x01'])
-        self.test_case.append(['4.1.3', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', '0x07'])
+        self.test_case.append(['4.1.2', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
+        self.test_case.append(['4.1.3', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.4', 'test_lpf', 'self.test_file.write([item, self.test_lpf(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.1.6', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
@@ -113,8 +112,8 @@ class aceinna_test_case():
         self.test_case.append(['4.2', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.2.1', 'test_save_config', 'self.test_file.write([item, self.test_save_config(targetdata), self.function_measure_data[key]])', '0x010001'])
         self.test_case.append(['4.2.2', 'test_algo_rst', 'self.test_file.write([item, self.test_algo_rst(targetdata), self.function_measure_data[key]])', '0x010001'])
-        self.test_case.append(['4.2.3', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata), self.function_measure_data[key]])', '0x01'])
-        self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x07'])
+        self.test_case.append(['4.2.3', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
+        self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', '0x1905'])
         self.test_case.append(['4.2.6', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.2.7', 'set_unit_behavior_new', 'self.test_file.write([item, self.set_unit_behavior_new(targetdata), self.function_measure_data[key]])', ''])
@@ -306,6 +305,8 @@ class aceinna_test_case():
 
     def test_pkt_rate(self, target_data): # 3.1 4.1.2
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.default_confi['pkt_rate'])
         payload = self.dev.request_cmd('pkt_rate')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
@@ -317,6 +318,8 @@ class aceinna_test_case():
 
     def test_pkt_type(self, target_data, len_fb_bytes = 2): # 3.2 4.1.3
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.default_confi['pkt_type'])
         payload = self.dev.request_cmd('pkt_type')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
@@ -507,7 +510,7 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         feedback = payload[-2:]
-        if int(feedback, 16) != 1:
+        if int(feedback, 16) != self.dev.default_confi['pkt_rate']:
             nosc_set = False
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':nosc_set})
 
@@ -521,7 +524,7 @@ class aceinna_test_case():
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:] # '0x5' so, need to get data from position2, ignore '0x'
         if len(feedback) == 2: 
             feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
-        if int(feedback, 16) != 7:
+        if int(feedback, 16) != self.dev.default_confi['pkt_type']:
             nosc_set = False
 
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':nosc_set})
@@ -540,7 +543,9 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         feedback = payload[-4:]
-        if int(feedback, 16) != 0:
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[nosc_set, feedback, self.dev.default_confi['orientation']]})
+        def_ori = self.dev.default_confi['orientation']
+        if int(feedback, 16) != int(def_ori[0] * 256 + def_ori[1]):
             nosc_set = False
 
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':nosc_set})
@@ -572,6 +577,8 @@ class aceinna_test_case():
 
     def set_pkt_rate(self, target_data, saved_rst = False, nosaved_rst = False): # 4.2.3 5.1.1 5.2.1
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.default_confi['pkt_rate'])
         self.dev.set_cmd('set_pkt_rate', [int(target_data, 16)])
         time.sleep(0.2)
         if saved_rst == True:
@@ -601,6 +608,8 @@ class aceinna_test_case():
         target_data: such as '0x07' '0x1F'
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.default_confi['pkt_type'])
         self.dev.set_cmd('set_pkt_type', [int(target_data, 16)])
         time.sleep(0.2)
         if saved_rst == True:

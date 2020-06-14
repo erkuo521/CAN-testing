@@ -30,6 +30,8 @@ class aceinna_test_case():
         print('finished set to default plant configuration.')
         if self.debug: input('finished set to default plant configuration.\n')
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'begin testing'})
+        for item_reminder in self.dev.predefine.get('manual_check'):
+            input(item_reminder)
 
         if len(test_item) == 0:
             for idx,i in enumerate(self.test_case):

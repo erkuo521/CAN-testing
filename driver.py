@@ -62,7 +62,10 @@ class aceinna_driver():
         self.thread_put.start()
         self.thread_provide.start()
 
-    def send_wakeup_msg(self):
+    def send_wakeup_msg(self): 
+        '''
+        for MTLT will enable auto baud function, which keep silent at first. need send msg to wake up it
+        '''
         for i in range(5):
             time.sleep(0.1)
             self.send_can_msg(0x18EAFF06, [00000000])

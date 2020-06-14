@@ -7,10 +7,13 @@
     "predefine":{
         "fwnum":"0x1301070001",
         "types_data":5,
-        "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],
-        "lpf_filter":[25, 5],
+        "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],        
         "unit_behavior": 90,
-        "bits_unit_bhr": 8,
+        "bits_unit_bhr": 8,        
+        "pkt_rate":5,
+        "pkt_type":7, 
+        "lpf_filter":[25, 5],
+        "orientation":9,
         "unit_data_nosrc":["0x02", "0x00"],
         "set_bank_ps0": {
             "ps_default":{"algo_rst":"0x50", "rse0":"0x00", "hw_bit":"0x52", "sw_bit":"0x53", "status":"0x54", "acc_hr":"0x6C", "rse1":"0x00", "rse2":"0x00"},
@@ -21,7 +24,13 @@
             "try_idx":[0, 1, 2, 3, 4]
         },
         "exclude_list":["4.3.6"],
-        "manual_check":["value is reasonable or not on all messages", "default orientation is right or not", "each bit of unit behavior setting valid actually or not"]
+        "manual_check":
+                    [
+                    "predefine in JSON is right for your UUT", 
+                    "value is reasonable or not on all messages", 
+                    "default orientation is right or not", 
+                    "each bit of unit behavior setting valid actually or not"
+                    ]
     },
     "configuration":{
         "can":[

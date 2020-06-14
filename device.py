@@ -60,11 +60,11 @@ class aceinna_device():
     
     def init_default_confi(self):
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
-        self.default_confi['pkt_rate'] = 1
-        self.default_confi['pkt_type'] = 7
+        self.default_confi['pkt_rate'] = self.predefine.get('pkt_rate') if 'pkt_rate' in self.predefine else 1 # pkt_rate index default config, if it is 1--100hz, if it's 5---20hz
+        self.default_confi['pkt_type'] = self.predefine.get('pkt_type') if 'pkt_type' in self.predefine else 7
         self.default_confi['lpf_filter'] = self.predefine.get('lpf_filter') if 'lpf_filter' in self.predefine else [25, 5] # lpf_rate, lpf_acc lpf_filter
-        self.default_confi['orientation'] = 0
-        self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 2
+        self.default_confi['orientation'] = self.predefine.get('orientation') if "orientation" in self.predefine else 0 # import orientation default config
+        self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 146
         self.default_confi['bank_ps0'] = [int(x, 16) for x in list(self.predefine['set_bank_ps0']['ps_default'].values())]
         self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['set_bank_ps1']['ps_default'].values())]
 

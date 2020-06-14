@@ -48,7 +48,7 @@ if __name__ == "__main__":
     try:
         print(time.time())
         # main(debug_main = False, dev_type = 'OPEN335RI')  # open debug mode
-        main(dev_type = 'OPEN335RI')
+        main(dev_type = 'MTLT305D')  # from type in JSON
     except Exception as e:
         print(e)
   

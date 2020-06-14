@@ -159,7 +159,7 @@ class aceinna_device():
             data = [00, (cmd_pgn >> 8) & 0xFF, cmd_pgn & 0x00FF]  
             for i in range(3):
                 self.driver.send_can_msg(self.req_ext_id_templete | cmd_idx, data)  
-                time.sleep(0.4)          
+                time.sleep(2)          
                 if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':[hex(x) for x in data] + [cmd_idx] + [cmd_name], 'j':self.req_feedback_payload[cmd_idx]})            
                 if self.req_feedback_payload[cmd_idx] != None:
                     return self.req_feedback_payload[cmd_idx]['payload']
@@ -201,18 +201,23 @@ class aceinna_device():
         pgn_des = [x for x in self.can_attribute if x['type'] == 'set' and x['name'] == cmd_name][0]
         ext_id = pgn_des['ext_set_id']
         if len(pgn_des):    
-            if ext_id in [419385600, 419385344]: # this is for ID 0x18FF5100 and 0x18FF5000                
+            if ext_id in [419385600, 419385344]: # this is for ID 0x18FF5100 and 0x18FF5000            
                 if (self.sw_rst_support == False) and (payload_without_src == [2]):
                     payload = [0] + [self.src] # save configurations 
                     self.driver.send_can_msg(ext_id, payload)
                     while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                         pass
                     time.sleep(1) 
+                    self.driver.send_wakeup_msg()
                 else:
                     payload = payload_without_src + [self.src] 
                     self.driver.send_can_msg(ext_id, payload)
                     time.sleep(0.1)  
-                    self.driver.send_can_msg(ext_id, payload)  
+                    self.driver.send_can_msg(ext_id, payload) 
+                if payload_without_src == [2]: 
+                    time.sleep(0.5)
+                    self.driver.send_wakeup_msg()  
+                    time.sleep(0.3) 
             elif ext_id in [419426304, 419426560]: # this is for ID 0x18FFF000 and 0x18FFF100
                 if self.type_name == 'MTLT305D':
                     payload = payload_without_src
@@ -309,6 +314,7 @@ class aceinna_device():
         while payload == False:
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 time.sleep(1)
+                self.driver.send_wakeup_msg()
             payload = self.request_cmd('pkt_rate')            
         odr_idx = int(payload[-2:], 16)
         time.sleep(0.2)
@@ -364,7 +370,7 @@ class aceinna_device():
         bitsnum = self.predefine['bits_unit_bhr']
         # get each bit value, idx 0 is LSB
         list2 = [((behavior_num >> (x)) & 1) for x in range(bitsnum)]
-        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':list2})
+        if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':list2, 'j':['behavior_num:', behavior_num]})
         return list2
 
     def send_get_uart_msg(self, request_data):
@@ -423,11 +429,11 @@ class aceinna_device():
                 time.sleep(0.4)
                 payload = self.request_cmd('unit_behavior')
         while payload == False:
-            while input('23need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+            while input('set_to_default, need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(1)   
             payload = self.request_cmd('unit_behavior')
-        disablebit = int(payload[-(self.predefine['bits_unit_bhr']):], 16)
+        disablebit = int(payload[-(self.get_item_json('unit_behavior')['fb_length']):], 16)
         time.sleep(1)
         if self.type_name == 'MTLT305D':
             self.set_cmd('set_unit_behavior', [0, disablebit, self.src])
@@ -448,6 +454,7 @@ class aceinna_device():
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'will power reset'})
             self.set_cmd('save_config', [2]) # save and power reset
             time.sleep(1)
+        self.driver.send_wakeup_msg()
         return True  
 
 '''

@@ -48,8 +48,9 @@ class aceinna_driver():
         else:
             self.msg_queue.queue.clear()
             self.msg_queue_lock.release()
+        self.send_wakeup_msg()
         
-        time.sleep(1.1)
+        time.sleep(2)
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':self.can_nodes})
         return [x for x in self.can_nodes if x in range(0x80, 0x100)] # range check[128, 256) 
 
@@ -57,8 +58,14 @@ class aceinna_driver():
         '''
         start 2 threads to collect msgs and provider to right dev
         '''
+        self.send_wakeup_msg() 
         self.thread_put.start()
         self.thread_provide.start()
+
+    def send_wakeup_msg(self):
+        for i in range(5):
+            time.sleep(0.1)
+            self.send_can_msg(0x18EAFF06, [00000000])
 
     def send_can_msg(self, id, data):
         if self.debug: eval('print(k,i)', {'k':sys._getframe().f_code.co_name, 'i':[hex(id)] + [hex(x) for x in data]})

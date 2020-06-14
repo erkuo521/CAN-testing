@@ -9,8 +9,8 @@
         "types_data":5,
         "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],
         "lpf_filter":[25, 5],
-        "unit_behavior": 90,
-        "bits_unit_bhr": 8,
+        "unit_behavior": 2,
+        "bits_unit_bhr": 5,
         "unit_data_nosrc":["0x02", "0x00"],
         "set_bank_ps0": {
             "ps_default":{"algo_rst":"0x50", "rse0":"0x00", "hw_bit":"0x52", "sw_bit":"0x53", "status":"0x54", "acc_hr":"0x6C", "rse1":"0x00", "rse2":"0x00"},

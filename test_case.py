@@ -30,21 +30,27 @@ class aceinna_test_case():
         print('finished set to default plant configuration.')
         if self.debug: input('finished set to default plant configuration.\n')
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'begin testing'})
+
         if len(test_item) == 0:
             for idx,i in enumerate(self.test_case):
-                if i[0] in self.dev.predefine.get('exclude_list'): 
-                    # not running the test function which in exclude list
+                self.dev.driver.send_wakeup_msg()
+                try:
+                    if i[0] in self.dev.predefine.get('exclude_list'): 
+                        # not running the test function which in exclude list
+                        self.test_file.write([i[0], 'N/A', 'N/A'])
+                        continue                
+                    if idx > (start_idx-2):
+                        print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
+                        if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
+                        if i[1] != 'manual' and i[1] != '':
+                            eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
+                        elif i[1] == 'manual':
+                            eval(i[2], {'self':self, 'item':i[0], 'sp':i[3], 'other_type':i[1]})  
+                        else:
+                            eval(i[2], {'self':self, 'item':i[0]})
+                except Exception as e:
+                    print(e, idx, i)
                     self.test_file.write([i[0], 'N/A', 'N/A'])
-                    continue                
-                if idx > (start_idx-2):
-                    print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
-                    if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
-                    if i[1] != 'manual' and i[1] != '':
-                        eval(i[2], {'self':self, 'item':i[0],'targetdata':i[3], 'key':i[1]})    
-                    elif i[1] == 'manual':
-                        eval(i[2], {'self':self, 'item':i[0], 'sp':i[3], 'other_type':i[1]})  
-                    else:
-                        eval(i[2], {'self':self, 'item':i[0]})
         else:
             for idx,i in enumerate(self.test_case):
                 if i[0] in test_item:
@@ -199,8 +205,8 @@ class aceinna_test_case():
         self.test_case.append(['5.8.9', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.8.10', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['5.8.11', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        # self.test_case.append(['5.8.12', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
-        # self.test_case.append(['5.8.13', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.8.12', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
+        self.test_case.append(['5.8.13', 'try_unit_bhr_list', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['5.9.1', 'set_try_ps', 'self.test_file.write([item, self.set_try_ps(), self.function_measure_data[key]])', ''])
         self.test_case.append(['5.9.2', 'set_try_ps', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
@@ -249,7 +255,11 @@ class aceinna_test_case():
         time.sleep(1)
         addr_in = int(target_data, 16) in self.dev.driver.get_can_nodes()
         self.function_measure_data[sys._getframe().f_code.co_name] = addr_in
-        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [0x87, 2, 0, 0x80])
+        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), 2, 0, 0x80])
+        time.sleep(0.2)
+        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), 2, 0, 0x80])
+        time.sleep(0.2)
+        self.dev.driver.send_can_msg(id = 0x18FF5100, data = [2, 0x87]) # save and power reset
         time.sleep(0.2)
         self.dev.driver.send_can_msg(id = 0x18FF5100, data = [2, 0x87]) # save and power reset
         time.sleep(1)
@@ -487,7 +497,8 @@ class aceinna_test_case():
         if nosaved_rst == True:
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
-            time.sleep(1)  
+            time.sleep(1) 
+            self.dev.driver.send_wakeup_msg() 
 
         payload = self.dev.request_cmd('pkt_rate')
         if payload == False: 
@@ -503,8 +514,11 @@ class aceinna_test_case():
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
         len_fb_bytes = self.dev.get_item_json('pkt_type')['fb_length']
-        feedback = payload[-(len_fb_bytes-1)*2:]          
-        feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+        feedback = payload[-(len_fb_bytes-1)*2:]    
+        if len(feedback) == 4:      
+            feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:] # '0x5' so, need to get data from position2, ignore '0x'
+        if len(feedback) == 2: 
+            feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
         if int(feedback, 16) != 7:
             nosc_set = False
 
@@ -536,6 +550,7 @@ class aceinna_test_case():
         if self.dev.get_item_json('unit_behavior')['fb_length'] == 2:
             len_fb_bytes = 2
             feedback = payload[-(len_fb_bytes-1)*2:]   
+            feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
         elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
             len_fb_bytes = 3
             feedback = payload[-(len_fb_bytes-1)*2:]   
@@ -564,6 +579,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(2)  
+            self.dev.driver.send_wakeup_msg() 
+
         payload = self.dev.request_cmd('pkt_rate')
         time.sleep(0.2)
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':payload})
@@ -591,6 +608,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(2)
+            self.dev.driver.send_wakeup_msg() 
+
         payload = self.dev.request_cmd('pkt_type')
         time.sleep(0.2)
         if payload == False: 
@@ -625,6 +644,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(2)
+            self.dev.driver.send_wakeup_msg() 
+
         payload = self.dev.request_cmd('lpf_filter')
         time.sleep(0.2)
         if payload == False: 
@@ -651,6 +672,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(1)
+            self.dev.driver.send_wakeup_msg() 
+
         payload = self.dev.request_cmd('orientation')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
@@ -687,6 +710,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(1)
+            self.dev.driver.send_wakeup_msg() 
+
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
@@ -724,6 +749,8 @@ class aceinna_test_case():
                 while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                     pass
                 time.sleep(1)
+                self.dev.driver.send_wakeup_msg() 
+
             # check value is as expected or not
             if self.test_unit_behavior(target_data = hex(enable_val)) == False:
                 set_unit_bhr = False
@@ -868,6 +895,8 @@ class aceinna_test_case():
             while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
                 pass
             time.sleep(1)
+            self.dev.driver.send_wakeup_msg() 
+
         newpgn = (0xFF50 & 0xFF00) + new_hw_bit    
         payload = self.dev.new_request_cmd(src = self.dev.src, new_pgn = newpgn)
         # print(payload)
@@ -978,7 +1007,10 @@ class aceinna_test_case():
                 bhr_set_ok = False
             else:
                 feedback = payload[-((len_fb_bytes-1)*2):]
-                feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+                if len(feedback) == 4:
+                    feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+                if len(feedback) == 2:
+                    feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
 
                 get_bhr = int(feedback, 16)
                 if self.dev.decode_behavior_num(get_bhr)[idx] == 0:
@@ -1196,6 +1228,8 @@ def without_sc_pwr_cycle(self, to_lpf_rate = 5, to_odr = 5, to_pkt_type = 0x0F, 
     while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
         pass
     time.sleep(2)
+    self.driver.send_wakeup_msg() 
+
     # check the configurations saved or not
     back_lpf_ok                 = True if self.get_lpf()[0] == 25 else False
     back_odr_ok                 = True if self.get_packet_rate()[1] == 1 else False

@@ -1,9 +1,9 @@
 {
     "name":"parameters for devices",
     "type":"MTLT305D",   
-    "test_items":["5.2.1"],
+    "test_items":[],
     "start_idx": 0, 
-    "debug_mode":"TRUE", 
+    "debug_mode":"FALSE", 
     "predefine":{
         "fwnum":"0x1301070001",
         "types_data":5,

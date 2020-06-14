@@ -523,7 +523,7 @@ class aceinna_test_case():
         if len(feedback) == 4:      
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:] # '0x5' so, need to get data from position2, ignore '0x'
         if len(feedback) == 2: 
-            feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
+            feedback = hex(struct.unpack('B', bytes.fromhex(feedback))[0])[2:]
         if int(feedback, 16) != self.dev.default_confi['pkt_type']:
             nosc_set = False
 
@@ -557,7 +557,7 @@ class aceinna_test_case():
         if self.dev.get_item_json('unit_behavior')['fb_length'] == 2:
             len_fb_bytes = 2
             feedback = payload[-(len_fb_bytes-1)*2:]   
-            feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
+            feedback = hex(struct.unpack('B', bytes.fromhex(feedback))[0])[2:]
         elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
             len_fb_bytes = 3
             feedback = payload[-(len_fb_bytes-1)*2:]   
@@ -1017,16 +1017,15 @@ class aceinna_test_case():
             if payload == False: 
                 bhr_set_ok = False
             else:
-                feedback = payload[-((len_fb_bytes-1)*2):]
-                if len(feedback) == 4:
-                    feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
-                if len(feedback) == 2:
-                    feedback = hex(struct.unpack('b', bytes.fromhex(feedback))[0])[2:]
-
+                feedback_pl = payload[-((len_fb_bytes-1)*2):]
+                if len(feedback_pl) == 4:
+                    feedback = hex(struct.unpack('<h', bytes.fromhex(feedback_pl))[0])[2:]
+                if len(feedback_pl) == 2:
+                    feedback = hex(struct.unpack('B', bytes.fromhex(feedback_pl))[0])[2:]
+                if self.debug: eval('print(k, i, j, m)', {'k':sys._getframe().f_code.co_name,'i':bhr_set_ok,'j':[idx, value, payload, 'feedback:', feedback], 'm':['enable list:', enable_list]})
                 get_bhr = int(feedback, 16)
                 if self.dev.decode_behavior_num(get_bhr)[idx] == 0:
                     bhr_set_ok = False
-            if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':bhr_set_ok,'j':[idx, value, payload]})
         
         if self.dev.type_name == 'MTLT305D':
             for idx, value in enumerate(disable_list):

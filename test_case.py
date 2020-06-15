@@ -39,7 +39,7 @@ class aceinna_test_case():
                 try:
                     if i[0] in self.dev.predefine.get('exclude_list'): 
                         # not running the test function which in exclude list
-                        self.test_file.write([i[0], 'N/A', 'N/A'])                
+                        self.test_file.write([i[0], 'N/A-exclude', 'N/A-exclude'])                
                     if idx > (start_idx-2) and (i[0] not in self.dev.predefine.get('exclude_list')):
                         print(i[0], 'idx:', idx, 'src:', hex(self.dev.src))
                         if self.debug: eval('input([k, i])', {'k':sys._getframe().f_code.co_name, 'i':str(i[0]) + ' idx: ' + str(idx) + ' src: ' + hex(self.dev.src)})
@@ -51,7 +51,7 @@ class aceinna_test_case():
                             eval(i[2], {'self':self, 'item':i[0]})
                 except Exception as e:
                     print(e, idx, i)
-                    self.test_file.write([i[0], 'N/A', 'N/A'])
+                    self.test_file.write([i[0], 'N/A-exception', 'N/A-exception'])
         else:
             for idx,i in enumerate(self.test_case):
                 if i[0] in test_item:

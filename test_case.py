@@ -92,7 +92,7 @@ class aceinna_test_case():
         self.test_case.append(['3.2', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.3', 'test_lpf_rate', 'self.test_file.write([item, self.test_lpf_rate(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.4', 'test_lpf_acc', 'self.test_file.write([item, self.test_lpf_acc(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
+        self.test_case.append(['3.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.8', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
@@ -103,7 +103,7 @@ class aceinna_test_case():
         self.test_case.append(['4.1.2', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.3', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.4', 'test_lpf', 'self.test_file.write([item, self.test_lpf(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['4.1.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
+        self.test_case.append(['4.1.5', 'test_orientation', 'self.test_file.write([item, self.test_orientation(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.6', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['4.1.7', 'test_hw_bit', 'self.test_file.write([item, self.test_hw_bit(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.1.8', 'test_sw_bit', 'self.test_file.write([item, self.test_sw_bit(targetdata), self.function_measure_data[key]])', '0x0000'])
@@ -114,7 +114,7 @@ class aceinna_test_case():
         self.test_case.append(['4.2.2', 'test_algo_rst', 'self.test_file.write([item, self.test_algo_rst(targetdata), self.function_measure_data[key]])', '0x010001'])
         self.test_case.append(['4.2.3', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', '0x1905'])
+        self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.6', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
         self.test_case.append(['4.2.7', 'set_unit_behavior_new', 'self.test_file.write([item, self.set_unit_behavior_new(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.8', 'set_bank_ps1', 'self.test_file.write([item, self.set_bank_ps1(targetdata), self.function_measure_data[key]])', ''])
@@ -364,6 +364,8 @@ class aceinna_test_case():
 
     def test_orientation(self, target_data): # 3.5 4.1.5
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = hex(self.dev.default_confi['orientation'][0] * 256 + self.dev.default_confi['orientation'][1])
         payload = self.dev.request_cmd('orientation')
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload

@@ -286,7 +286,7 @@ class aceinna_test_case():
         self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa])
         addr_newlist = ['','','','']
         while addr_newlist[0] != '5246':
-            addr_newlist = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]) # 5555 5246 03 010032 acfa read 0x32 from EEPROM
+            addr_newlist = self.dev.send_get_uart_msg(request_data = [0x55, 0x55, 0x52, 0x46, 0x03, 0x01, 0x00, 0x32, 0xac, 0xfa]) # 5555 5246 03 010032 acfa read 0x32 from EEPROM to get SA
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_newlist})
         new = int(addr_newlist[2][-4:], 16)
 

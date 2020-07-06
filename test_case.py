@@ -74,8 +74,8 @@ class aceinna_test_case():
         self.test_case.append(['1.3', 'get_dev_src', 'self.test_file.write([item, self.get_dev_src(targetdata), self.function_measure_data[key]])', '0x80'])
         self.test_case.append(['1.4', 'get_addr_claim', 'self.test_file.write([item, self.get_addr_claim(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['1.5', 'verify_addr_saved', 'self.test_file.write([item, self.verify_addr_saved(targetdata), self.function_measure_data[key]])', '0x87'])
-        self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
+        # self.test_case.append(['1.6', '', 'self.test_file.write([item])', ''])
+        # self.test_case.append(['1.7', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['1.6', 'verify_addr_saved_uart', 'self.test_file.write([item, self.verify_addr_saved_uart(targetdata), self.function_measure_data[key]])', '0x87'])
         self.test_case.append(['1.7', 'verify_addr_saved_uart', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', ''])
         self.test_case.append(['1.8', 'manual', 'self.test_file.write([item, sp, other_type])', ''])
@@ -250,20 +250,21 @@ class aceinna_test_case():
 
     def verify_addr_saved(self, target_data): # 1.5 
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
+        self.dev.set_cmd('set_unit_behavior', [self.dev.default_confi['unit_behavior'], 0, 0, 0, int(target_data, 16)])
         time.sleep(0.2)
         self.dev.set_cmd('save_config', [2]) # save and power reset
         time.sleep(1)
         addr_in = int(target_data, 16) in self.dev.driver.get_can_nodes()
         self.function_measure_data[sys._getframe().f_code.co_name] = addr_in
-        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), 2, 0, 0x80])
+        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), self.dev.default_confi['unit_behavior'], 0, 0, 0, 0x80])
         time.sleep(0.2)
-        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), 2, 0, 0x80])
+        self.dev.driver.send_can_msg(id = 0x18FF5900, data = [int(target_data, 16), self.dev.default_confi['unit_behavior'], 0, 0, 0, 0x80])
         time.sleep(0.2)
         self.dev.driver.send_can_msg(id = 0x18FF5100, data = [2, 0x87]) # save and power reset
         time.sleep(0.2)
         self.dev.driver.send_can_msg(id = 0x18FF5100, data = [2, 0x87]) # save and power reset
         time.sleep(1)
+        self.dev.driver.send_wakeup_msg()
         return addr_in
 
     def verify_addr_saved_uart(self, target_data): #1.6-1.7 0x87
@@ -276,7 +277,7 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':addr_list})
         original = int(addr_list[2][-4:], 16)
         #change addr and saved
-        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
+        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, 0, 0, int(target_data, 16)])
         time.sleep(0.2)
         self.dev.set_cmd('save_config', [2]) # save and power reset
         time.sleep(2)
@@ -293,11 +294,12 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = (new == int(target_data, 16))
 
         # back to original address
-        self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, int(target_data, 16)])
-        self.dev.driver.send_can_msg(0x18FF5900, [new, 2, 0, original])
+        self.dev.driver.send_can_msg(0x18FF5900, [new, 146, 0, 0, 0, original])
         time.sleep(0.2)
         self.dev.driver.send_can_msg(0x18FF5100, [2, new]) # save and power reset
         time.sleep(2)
+        self.dev.driver.send_wakeup_msg()
+        # self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, 0, 0, int(target_data, 16)])
 
         return new == int(target_data, 16)
         
@@ -389,10 +391,13 @@ class aceinna_test_case():
         
         if self.dev.get_item_json('unit_behavior')['fb_length'] == 2:
             feedback = payload[-(len_fb_bytes-1)*2:]   
-        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
+        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3 and self.dev.type_name == '335RI':
             len_fb_bytes = 3
             feedback = payload[-(len_fb_bytes-1)*2:]   
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+        else:
+            feedback = payload[2:4]  
+
 
         # feedback = payload[-2:]    # & bitmask: 0x3F 
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits, 0x1F for 4 bits
@@ -496,7 +501,7 @@ class aceinna_test_case():
         self.dev.set_cmd('set_orientation', [0, 9])
         time.sleep(0.2)
         if self.dev.type_name == 'MTLT305D':
-            self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 1, self.dev.src])
+            self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior'), 0, 1, 0, self.dev.src])
         elif self.dev.type_name == 'OPEN335RI':
             self.dev.set_cmd('set_unit_behavior', [self.dev.predefine.get('unit_behavior') + pow(2, 2)])
         time.sleep(0.2)
@@ -560,10 +565,13 @@ class aceinna_test_case():
             len_fb_bytes = 2
             feedback = payload[-(len_fb_bytes-1)*2:]   
             feedback = hex(struct.unpack('B', bytes.fromhex(feedback))[0])[2:]
-        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
+        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3 and self.dev.type_name == '335RI':
             len_fb_bytes = 3
-            feedback = payload[-(len_fb_bytes-1)*2:]   
+            feedback = payload[-(len_fb_bytes-1)*2:]
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
+        else:
+            feedback = payload[2:4]   
+            feedback = hex(struct.unpack('B', bytes.fromhex(feedback))[0])[2:]
 
         # feedback = payload[-2:]
         if self.dev.type_name == 'MTLT305D':
@@ -628,10 +636,10 @@ class aceinna_test_case():
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload        
-        if self.dev.get_item_json('unit_behavior')['fb_length'] == 2:
+        if self.dev.get_item_json('pkt_type')['fb_length'] == 2:
             len_fb_bytes = 2
             feedback = payload[-(len_fb_bytes-1)*2:]   
-        elif self.dev.get_item_json('unit_behavior')['fb_length'] == 3:
+        elif self.dev.get_item_json('pkt_type')['fb_length'] == 3:
             len_fb_bytes = 3
             feedback = payload[-(len_fb_bytes-1)*2:]   
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]        
@@ -697,7 +705,7 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
-    def set_unit_behavior(self, target_data, disable_bit = 0, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 5.2.5
+    def set_unit_behavior(self, target_data, disable_bit = 0, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 5.2.5 invalid now, replaced by set unit behavior new().
         '''
         target_data: such as '0x02', it is string of enable_bit
         '''
@@ -729,8 +737,9 @@ class aceinna_test_case():
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
-        feedback = payload[-(self.dev.get_item_json('unit_behavior')['fb_length']-1)*2:]
-        if self.dev.get_item_json('unit_behavior')['fb_length'] ==3:
+        feedback = payload[2:4]
+        if self.dev.get_item_json('unit_behavior')['fb_length'] == 3 and self.dev.type_name == '335RI':
+            feedback = payload[-(self.dev.get_item_json('unit_behavior')['fb_length']-1)*2:]
             feedback = hex(struct.unpack('<h', bytes.fromhex(feedback))[0])[2:]
  
         self.dev.set_to_default(pwr_rst = False)
@@ -750,7 +759,7 @@ class aceinna_test_case():
             enable_val = self.dev.predefine.get('unit_behavior') + pow(2, bit_idx)
             disable_val = 0
             if self.dev.type_name == 'MTLT305D':
-                self.dev.set_cmd('set_unit_behavior', [enable_val, disable_val, self.dev.src])                
+                self.dev.set_cmd('set_unit_behavior', [enable_val, 0, disable_val, 0, self.dev.src])                
             elif self.dev.type_name == 'OPEN335RI':
                 self.dev.set_cmd('set_unit_behavior', [enable_val])
             time.sleep(1)
@@ -861,7 +870,7 @@ class aceinna_test_case():
                             results[cmd_name] = False
                         else:
                             results[cmd_name] = True
-                        print(ps_type, try_idx)
+                        print(sys._getframe().f_code.co_name, ps_type, try_idx)
                         
                     elif item_dict.get('type') == 'auto': # auto send data msg
                         feedback = self.get_acc_hr(target_data='',back_default=False)
@@ -1009,7 +1018,7 @@ class aceinna_test_case():
         for idx, value in enumerate(enable_list):
             # input('clear cantest dbc')
             if self.dev.type_name == 'MTLT305D':
-                self.dev.set_cmd('set_unit_behavior', [value, 0, self.dev.src])
+                self.dev.set_cmd('set_unit_behavior', [value, 0, 0, 0, self.dev.src])
             elif self.dev.type_name == 'OPEN335RI':
                 self.dev.set_cmd('set_unit_behavior', [value])
             time.sleep(1)
@@ -1019,7 +1028,8 @@ class aceinna_test_case():
             if payload == False: 
                 bhr_set_ok = False
             else:
-                feedback_pl = payload[-((len_fb_bytes-1)*2):]
+                # feedback_pl = payload[-((len_fb_bytes-1)*2):]
+                feedback_pl = payload[2:]
                 if len(feedback_pl) == 4:
                     feedback = hex(struct.unpack('<h', bytes.fromhex(feedback_pl))[0])[2:]
                 if len(feedback_pl) == 2:
@@ -1031,13 +1041,14 @@ class aceinna_test_case():
         
         if self.dev.type_name == 'MTLT305D':
             for idx, value in enumerate(disable_list):
-                self.dev.set_cmd('set_unit_behavior', [0, value, self.dev.src])
+                self.dev.set_cmd('set_unit_behavior', [0, 0, value, 0, self.dev.src])
                 time.sleep(0.2)
                 payload = self.dev.request_cmd('unit_behavior')
                 if payload == False: 
                     bhr_set_ok = False
                 else:
-                    get_bhr = int(payload[-((len_fb_bytes-1)*2):], 16)
+                    # get_bhr = int(payload[-((len_fb_bytes-1)*2):], 16)
+                    get_bhr = int(payload[2:4], 16)
                     if self.dev.decode_behavior_num(get_bhr)[0] == 1:
                         bhr_set_ok = False
                 if self.debug: eval('print(k, i, j)', {'k':sys._getframe().f_code.co_name,'i':bhr_set_ok,'j':[idx, value]})

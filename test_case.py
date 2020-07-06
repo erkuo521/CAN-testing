@@ -96,6 +96,9 @@ class aceinna_test_case():
         self.test_case.append(['3.6', 'test_unit_behavior', 'self.test_file.write([item, self.test_unit_behavior(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.7', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['3.8', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
+        self.test_case.append(['3.9', 'test_unit_bhr_rawrate', 'self.test_file.write([item, self.test_unit_bhr_rawrate(targetdata), self.function_measure_data[key]])', ''])
+        # self.test_case.append(['3.10', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
+        # self.test_case.append(['3.11', 'test_ecu_id', 'self.test_file.write([item, self.test_ecu_id(targetdata), self.function_measure_data[key]])', '83'])
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.1', '', 'self.test_file.write([item])', ''])
@@ -417,6 +420,20 @@ class aceinna_test_case():
         measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == self.fw_num
+
+    def test_unit_bhr_rawrate(self, target_data): # 3.9
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
+        if target_data.strip() == '':
+            target_data = self.dev.default_confi['unit_behavior_rawrate']
+        payload = self.dev.request_cmd('unit_behavior', unit_behavior_rawrate=True)
+        if payload == False: 
+            self.function_measure_data[sys._getframe().f_code.co_name] = payload
+            return payload
+        feedback = payload[4:6] 
+        # fw_str = '.'.join([payload[:2], payload[2:4], payload[4:6], payload[6:8], payload[8:10]])
+        measure_data = "0x{0}".format(feedback)     
+        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
+        return int(measure_data, 16) == target_data
     
     def test_lpf(self, target_data): # 4.1.4
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})

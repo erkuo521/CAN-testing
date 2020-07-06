@@ -1,7 +1,7 @@
 {
     "name":"parameters for devices",
     "type":"MTLT305D",   
-    "test_items":[],
+    "test_items":["3.9"],
     "start_idx": 0, 
     "debug_mode":"FALSE", 
     "predefine":{
@@ -10,6 +10,7 @@
         "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],        
         "unit_behavior": 146,
         "bits_unit_bhr": 8,
+        "unit_behavior_rawrate": 0,
         "pkt_rate":1,
         "pkt_type":7, 
         "lpf_filter":[25, 5],

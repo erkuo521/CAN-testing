@@ -17,7 +17,7 @@ def main(dev_type = 'MTLT305D'):
     start_time = time.time()   
     with open('can_attribute_' + dev_type + '.json') as json_data:
         can_attribute = json.load(json_data)
-    debug_main = True if can_attribute['debug_mode'] == 'TRUE' else False
+    debug_main = True if can_attribute['debug_mode'].upper() == 'TRUE' else False
     testitems = can_attribute['test_items'] # testitems = ['3.6']
 
     main_driver = aceinna_driver(debug_mode = debug_main)
@@ -34,7 +34,7 @@ def main(dev_type = 'MTLT305D'):
 
     for i in device_list:
         print('start testing device_src:{0} device_sn:{1}'.format(hex(i.src), hex(i.sn_can)))
-        if debug_main: eval('input([k, i, j])', {'k':sys._getframe().f_code.co_name,'i':hex(i.sn_can), 'j':hex(i.src)})
+        if debug_main: eval('input([k, i, j, m])', {'k':sys._getframe().f_code.co_name,'i':hex(i.sn_can), 'j':hex(i.src), 'm':'press enter:'})
         test_file = my_csv(os.path.join(os.getcwd(), 'data','result_{0:#X}_{1:#X}_{2}_FW{3}.csv'.format(i.src, i.sn_can, dev_type, can_attribute['predefine']['fwnum'])))
         main_test = aceinna_test_case(test_file, debug_mode = debug_main)
         main_test.set_test_dev(i, fwnum=int(can_attribute['predefine']['fwnum'], 16))  # need to be updated for each testing ----------input: 1        
@@ -44,7 +44,7 @@ def main(dev_type = 'MTLT305D'):
     return True
 
 if __name__ == "__main__":
-    input('will start main()')
+    input('will start main(), press Enter:')
     try:
         print(time.time())
         # main(debug_main = False, dev_type = 'OPEN335RI')  # open debug mode

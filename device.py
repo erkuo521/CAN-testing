@@ -66,6 +66,7 @@ class aceinna_device():
         self.default_confi['orientation'] = self.predefine.get('orientation') if "orientation" in self.predefine else [0, 0] # import orientation default config
         self.default_confi['unit_behavior'] = self.predefine.get('unit_behavior') if 'unit_behavior' in self.predefine else 146
         self.default_confi['unit_behavior_rawrate'] = self.predefine.get('unit_behavior_rawrate') if 'unit_behavior_rawrate' in self.predefine else 0
+        self.default_confi['algo_ctl'] = self.predefine.get('algo_ctl') if 'algo_ctl' in self.predefine else "00D007D0070A00"
         self.default_confi['bank_ps0'] = [int(x, 16) for x in list(self.predefine['set_bank_ps0']['ps_default'].values())]
         self.default_confi['bank_ps1'] = [int(x, 16) for x in list(self.predefine['set_bank_ps1']['ps_default'].values())]
 
@@ -150,6 +151,7 @@ class aceinna_device():
         send cmd and get feedback, based on cmd_type. refer to json
         cmd_names are ['fw_version', 'ecu_id', 'hw_bit', 'sw_bit', 'status', 'pkt_rate', 'pkt_type', 
         'lpf_filter', 'orientation', 'unit_behavior', 'algo_ctl']
+        unit_behavior_rawrate is True will receive 3 bytes in feedback, for FW update version.19.1.81 or above
         '''
         pgn_des = self.get_item_json(namestr = cmd_name)
         if len(pgn_des):
@@ -235,7 +237,7 @@ class aceinna_device():
             else:
                 payload = [self.src] + payload_without_src
                 self.driver.send_can_msg(ext_id, payload) 
-                time.sleep(0.1)  
+                time.sleep(0.2)  
                 self.driver.send_can_msg(ext_id, payload)  
             return True
         else:
@@ -338,7 +340,7 @@ class aceinna_device():
         sumexist = sum(exist_list)
         if self.debug: eval('print(k,j,slope,m )', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:','m':exist_list})
         if sumexist == 0 & self.debug:
-            if self.debug: input('sumexist of pkt_type is o')
+            if self.debug: input('sumexist of pkt_type is 0, pls press enter:')
         self.set_cmd('set_pkt_rate', [odr_idx])
         time.sleep(0.2)
         return sumexist
@@ -426,7 +428,8 @@ class aceinna_device():
         unit is working well, and then set default configurations
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':['pwr_reset_request:',pwr_rst]})
-        # set bank ps cmd firstly, let all cmds back default configurations same as User Manual, or some cmd maybe not working
+        # set bank ps cmd firstly, let all cmds back default configurations same as User Manual, or some cmd maybe not working              
+        self.set_cmd('set_algo_ctl', [int(self.default_confi['algo_ctl'][x:x+2], 16) for x in range(0,13,2)])
         for i in ['bank_ps0', 'bank_ps1']:
             self.set_cmd('set_' + i, self.default_confi[i])
         # check whether can get unit behavior or not, to confirm the right feedbac from unit. then can start to set.
@@ -451,10 +454,12 @@ class aceinna_device():
         # if self.type_name == 'MTLT335RI': #335RI not fulfill disable bit function
         #     self.set_cmd('set_unit_behavior', [0, disablebit, 0, self.src])
         time.sleep(1)
-        for i in ['pkt_rate','pkt_type', 'lpf_filter', 'orientation', 'bank_ps0', 'bank_ps1']:
+        for i in ['algo_ctl', 'pkt_rate','pkt_type', 'lpf_filter', 'orientation', 'bank_ps0', 'bank_ps1']:
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i': i})
             if isinstance(self.default_confi[i], list):
                 self.set_cmd('set_' + i, self.default_confi[i])
+            elif i == 'algo_ctl' and isinstance(self.default_confi['algo_ctl'], str):
+                self.set_cmd('set_' + i, [int(self.default_confi['algo_ctl'][x:x+2], 16) for x in range(0,13,2)])
             else:
                 self.set_cmd('set_' + i, [self.default_confi[i]])
         time.sleep(1)

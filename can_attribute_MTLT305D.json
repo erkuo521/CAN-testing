@@ -1,11 +1,11 @@
 {
     "name":"parameters for devices",
     "type":"MTLT305D",   
-    "test_items":["3.9"],
+    "test_items":[],
     "start_idx": 0, 
     "debug_mode":"FALSE", 
     "predefine":{
-        "fwnum":"0x1301080001",
+        "fwnum":"0x1301080002",
         "types_data":5,
         "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],        
         "unit_behavior": 146,
@@ -15,7 +15,7 @@
         "pkt_type":7, 
         "lpf_filter":[25, 5],
         "orientation":[0, 0],
-        "algo_ctl":[2000, 2000, 10],
+        "algo_ctl":"00D007D0070A00",
         "unit_data_nosrc":["0x02", "0x00"],
         "set_bank_ps0": {
             "ps_default":{"algo_rst":"0x50", "rse0":"0x00", "hw_bit":"0x52", "sw_bit":"0x53", "status":"0x54", "acc_hr":"0x6C", "rse1":"0x00", "rse2":"0x00"},
@@ -53,7 +53,7 @@
             {"req_id":7, "name":"lpf_filter",          "pgn": 65367, "type":"request"},
             {"req_id":8, "name":"orientation",         "pgn": 65368, "type":"request"},
             {"req_id":9, "name":"unit_behavior",       "pgn": 65369, "type":"request", "fb_length":2},
-            {"req_id":9, "name":"algo_ctl",            "pgn": 65371, "type":"request"},
+            {"req_id":10, "name":"algo_ctl",            "pgn": 65371, "type":"request"},
             {"fb_id":0, "name":"save_config_feedback",    "pgn": 65361, "type":"feedback"},
             {"fb_id":1, "name":"algo_rst_feedback",       "pgn": 65360, "type":"feedback"},
             {"set_id":0, "name":"save_config",     "ext_set_id":419385600, "type":"set", "restart_support":"TRUE"},

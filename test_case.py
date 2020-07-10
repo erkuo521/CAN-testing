@@ -549,8 +549,13 @@ class aceinna_test_case():
         time.sleep(0.2)
 
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(1) 
             self.dev.driver.send_wakeup_msg() 
 
@@ -637,8 +642,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(2)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(2)  
             target_data = hex(self.dev.default_confi['pkt_rate']) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -669,8 +679,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(2)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(2)
             target_data = hex(self.dev.default_confi['pkt_type']) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -706,8 +721,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(2)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(2)
             target_data = hex(self.dev.default_confi['lpf_filter'][0]*256 + self.dev.default_confi['lpf_filter'][1]) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -735,8 +755,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(1)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(1)
             target_data = hex(self.dev.default_confi['set_orientation'][0]*256 + self.dev.default_confi['set_orientation'][1]) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -774,11 +799,16 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(1)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(1)
-            enabel_bit = hex(self.dev.default_confi['unit_behavior']) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
+            enabel_bit = hex(self.dev.default_confi['unit_behavior']) # if no save repower, target data should be update to default value
 
         payload = self.dev.request_cmd('unit_behavior')
         if payload == False: 
@@ -815,8 +845,13 @@ class aceinna_test_case():
                 self.dev.set_cmd('save_config', [2]) # save and restart
                 time.sleep(1)
             if nosaved_rst == True:
-                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                    pass
+                if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                    self.dev.auto_power.power_off()
+                    time.sleep(4)
+                    self.dev.auto_power.power_on()
+                else:
+                    while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                        pass
                 time.sleep(1)
                 self.dev.driver.send_wakeup_msg() 
 
@@ -894,8 +929,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(1)
         if nosaved_rst == True:
-            while input(sys._getframe().f_code.co_name + ': need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(2)  
             target_data = hex(self.dev.default_confi['unit_behavior_rawrate']) # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -916,8 +956,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(1)
         if nosaved_rst == True:
-            while input(sys._getframe().f_code.co_name + ': need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(2)  
             target_data = self.dev.default_confi['algo_ctl'] # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -1011,8 +1056,13 @@ class aceinna_test_case():
             self.dev.set_cmd('save_config', [2]) # save and restart
             time.sleep(1)
         if nosaved_rst == True:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.dev.auto_power.power_off()
+                time.sleep(4)
+                self.dev.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(1)
             self.dev.driver.send_wakeup_msg() 
             if self.test_hw_bit(target_data='0x0000'):
@@ -1326,8 +1376,13 @@ def with_sc_pwr_cycle(self, to_lpf_rate = 5, to_odr = 5, to_pkt_type = 0x0F, to_
     self.set_orientation(to_ori)
     self.set_unit_behavior(enabel_bit=0,disable_bit=1)
     self.save_configuration() # restart the unit
-    while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-        pass
+    if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+        self.dev.auto_power.power_off()
+        time.sleep(4)
+        self.dev.auto_power.power_on()
+    else:
+        while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+            pass
     time.sleep(2)
     # check the configurations saved or not
     print('check after power reset.')
@@ -1348,8 +1403,13 @@ def without_sc_pwr_cycle(self, to_lpf_rate = 5, to_odr = 5, to_pkt_type = 0x0F, 
     self.set_pkt_type(to_pkt_type)
     self.set_orientation(to_ori)
     self.set_unit_behavior(enabel_bit=0,disable_bit=1)
-    while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-        pass
+    if self.dev.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+        self.dev.auto_power.power_off()
+        time.sleep(4)
+        self.dev.auto_power.power_on()
+    else:
+        while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+            pass
     time.sleep(2)
     self.driver.send_wakeup_msg() 
 

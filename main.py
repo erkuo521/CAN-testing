@@ -11,21 +11,28 @@ from excel_sheet import my_csv
 from device import aceinna_device
 from driver import aceinna_driver
 from test_case import aceinna_test_case
+from gpio import aceinna_gpio
 
 # def main(debug_main = False, dev_type = 'MTLT305D'):
-def main(dev_type = 'MTLT305D'): 
+def main(dev_type = 'MTLT305D', bcm_pin_list = []): 
     start_time = time.time()   
     with open('can_attribute_' + dev_type + '.json') as json_data:
         can_attribute = json.load(json_data)
     debug_main = True if can_attribute['debug_mode'].upper() == 'TRUE' else False
     testitems = can_attribute['test_items'] # testitems = ['3.6']
 
+    gpio_list = []
+    bcm_pin_list.sort()
+    for pin in bcm_pin_list: # created gpio instance based on pins, sorted the list firstly
+        exec(f'gpio_{pin}=aceinna_gpio(pwr_pin = {pin})') # sequence is correspond to sequency indev_nodes.
+        exec(f'gpio_list.append(gpio_{pin})')  
+
     main_driver = aceinna_driver(debug_mode = debug_main)
-    dev_nodes = main_driver.get_can_nodes()
-    
+    dev_nodes = main_driver.get_can_nodes()    
+
     device_list = []
-    for i in dev_nodes:
-        ad = aceinna_device(i, attribute_json = can_attribute,debug_mode = debug_main)
+    for idx,i in enumerate(dev_nodes):
+        ad = aceinna_device(i, attribute_json = can_attribute,debug_mode = debug_main, power_gpio=gpio_list[idx])
         main_driver.register_dev(dev_src = i, instance_dev = ad) # regist each device to driver
         ad.add_driver(main_driver)
         ad.update_sn()
@@ -48,7 +55,7 @@ if __name__ == "__main__":
     try:
         print(time.time())
         # main(debug_main = False, dev_type = 'OPEN335RI')  # open debug mode
-        main(dev_type = 'MTLT305D')  # from type in JSON
+        main(dev_type = 'MTLT305D', bcm_pin_list=[4])  # from type in JSON
     except Exception as e:
         print(e)
   

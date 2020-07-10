@@ -22,8 +22,11 @@ import json
 from queue import Queue #only python3 supported now
 from driver import aceinna_driver
 
+
 class aceinna_device(): 
-    def __init__(self, source_address, attribute_json, debug_mode = False):
+    def __init__(self, source_address, attribute_json, debug_mode = False, power_gpio = None):
+        # self.power_pin = pwr_pin # positve of power pin 
+        self.auto_power = power_gpio
         self.src = source_address
         self.sn_can  = None
         self.default_confi = {}
@@ -41,7 +44,7 @@ class aceinna_device():
         self.set_feedback_payload = []
 
         self.init_data_list()
-        self.init_default_confi()        
+        self.init_default_confi() 
 
     def add_driver(self, driver_instance):
         self.driver = driver_instance
@@ -213,8 +216,13 @@ class aceinna_device():
                 if (self.sw_rst_support == False) and (payload_without_src == [2]):
                     payload = [0] + [self.src] # save configurations 
                     self.driver.send_can_msg(ext_id, payload)
-                    while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                        pass
+                    if self.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                        self.auto_power.power_off()
+                        time.sleep(4)
+                        self.auto_power.power_on()
+                    else:
+                        while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                            pass
                     time.sleep(1) 
                     self.driver.send_wakeup_msg()
                 else:
@@ -320,9 +328,14 @@ class aceinna_device():
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         payload = self.request_cmd('pkt_rate')
         while payload == False:
-            while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                time.sleep(1)
-                self.driver.send_wakeup_msg()
+            if self.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.auto_power.power_off()
+                time.sleep(4)
+                self.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
+            self.driver.send_wakeup_msg()
             payload = self.request_cmd('pkt_rate')            
         odr_idx = int(payload[-2:], 16)
         time.sleep(0.2)
@@ -421,7 +434,15 @@ class aceinna_device():
         wy = wx_wy_wz[1] * (1/128.0) - 250.0
         wz = wx_wy_wz[2] * (1/128.0) - 250.0  
         return 'Time: {3:18.6f} WX  : {0:6.2f} WY   : {1:6.2f} WZ: {2:6.2f}'.format(wx,wy,wz,msg.timestamp)
-     
+    
+    # def ctl_power(self, power_on = False):
+    #     if power_on:
+    #         GPIO.output(self.power_pin,GPIO.HIGH) 
+    #         print('power on now')
+    #     else:
+    #         GPIO.output(self.power_pin,GPIO.LOW) 
+    #         print('power off now')
+
     def set_to_default(self, pwr_rst = True): # back to default confi and power cycle 
         '''
         set ps cmd to recover all ps cmd, then check unit_behavior cmd to confirm 
@@ -429,7 +450,6 @@ class aceinna_device():
         '''
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':['pwr_reset_request:',pwr_rst]})
         # set bank ps cmd firstly, let all cmds back default configurations same as User Manual, or some cmd maybe not working              
-        self.set_cmd('set_algo_ctl', [int(self.default_confi['algo_ctl'][x:x+2], 16) for x in range(0,13,2)])
         for i in ['bank_ps0', 'bank_ps1']:
             self.set_cmd('set_' + i, self.default_confi[i])
         # check whether can get unit behavior or not, to confirm the right feedbac from unit. then can start to set.
@@ -440,8 +460,13 @@ class aceinna_device():
                 time.sleep(0.4)
                 payload = self.request_cmd('unit_behavior', unit_behavior_rawrate=True)
         while payload == False:
-            while input('in set_to_default, request unit behavior failure again, need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                pass
+            if self.auto_power.enabled: # only if enabled, it will power on and off by gpio automaticaly.  default will not use auto-power, need manual power on and off
+                self.auto_power.power_off()
+                time.sleep(4)
+                self.auto_power.power_on()
+            else:
+                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                    pass
             time.sleep(1)   
             payload = self.request_cmd('unit_behavior', unit_behavior_rawrate=True)
         # set unit behavior to 0, and then configure it to default value based on JSON. alos configure all other items
@@ -511,6 +536,18 @@ class aceinna_device():
         # autobaud_dete    = ((behavior_num >> (5-1)) & 1)
         # can_term_resistor= ((behavior_num >> (6-1)) & 1)
         # list2 = [over_range, dyna_motion, uncorr_rate, swap_rateXY, autobaud_dete, can_term_resistor]
+
+        # def gpio_setting(self):
+    #         GPIO.setmode(GPIO.BCM)
+    #         GPIO.setup(self.power_pin,GPIO.OUT)
+    #         GPIO.output(self.power_pin,GPIO.HIGH) # used as power positive line  in Pi3 board             
+    # def test(self):
+    #     while True:
+    #         input('pwr off:')
+    #         print(self.power.power_pin)
+    #         self.power.power_off()
+    #         input('pwr on')
+    #         self.power.power_on()    
 
 '''
 

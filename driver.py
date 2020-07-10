@@ -80,6 +80,7 @@ class aceinna_driver():
             msg_pdu = self.get_pdu_list(msg=msg_raw)            
             if msg_pdu['src'] not in self.can_nodes: # detect src for all nodes
                 self.can_nodes.append(msg_pdu['src'])
+                self.can_nodes.sort() # from small to big, sorted
 
             # if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':msg_pdu})
             self.msg_queue_lock.acquire()

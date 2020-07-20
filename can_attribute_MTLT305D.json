@@ -5,7 +5,7 @@
     "start_idx": 0, 
     "debug_mode":"FALSE", 
     "predefine":{
-        "fwnum":"0x1301080002",
+        "fwnum":"0x1301080003",
         "types_data":5,
         "types_name":["ssi2", "rate", "accel", "ssi", "acc_hr"],        
         "unit_behavior": 146,

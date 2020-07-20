@@ -490,9 +490,9 @@ class aceinna_test_case():
         if payload == False: 
             self.function_measure_data[sys._getframe().f_code.co_name] = payload
             return payload
-        feedback = payload[-4:] 
-        measure_data = "0x{0}".format(feedback)     
-        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
+        feedback = payload[-4:]
+        measure_data = "0x{0}".format(feedback)
+        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data
         return int(measure_data, 16) == int(target_data, 16)
 
     def test_sensor_status(self, target_data): # 4.1.9
@@ -554,9 +554,10 @@ class aceinna_test_case():
                 time.sleep(4)
                 self.dev.auto_power.power_on()
             else:
-                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                    pass
-            time.sleep(1) 
+                self.dev.set_cmd('algo_rst', [2]) # no save reset
+                # while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                #     pass
+            time.sleep(1)
             self.dev.driver.send_wakeup_msg() 
 
         payload = self.dev.request_cmd('pkt_rate')
@@ -1297,6 +1298,8 @@ class aceinna_test_case():
         if not find all zero in payload, True will feedback
         '''
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
+        self.dev.set_to_default(pwr_rst = False)
+        time.sleep(0.2)
         self.dev.set_cmd('set_pkt_type', [0x1F])
         time.sleep(0.2)
         self.dev.set_cmd('set_pkt_rate', [1])

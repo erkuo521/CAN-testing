@@ -243,6 +243,7 @@ class aceinna_device():
                 time.sleep(0.1)  
                 self.driver.send_can_msg(ext_id, payload)     
             else:
+                if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':'HERE246'})
                 payload = [self.src] + payload_without_src
                 self.driver.send_can_msg(ext_id, payload) 
                 time.sleep(0.2)  
@@ -476,8 +477,8 @@ class aceinna_device():
         time.sleep(1)
         if self.type_name == 'MTLT305D':
             self.set_cmd('set_unit_behavior', [0, 0, disablebit, disablebit_rawrate, self.src])
-        # if self.type_name == 'MTLT335RI': #335RI not fulfill disable bit function
-        #     self.set_cmd('set_unit_behavior', [0, disablebit, 0, self.src])
+        if self.type_name == 'MTLT335RI': #335RI not fulfill disable bit function
+            self.set_cmd('set_unit_behavior', [0, disablebit, 0, self.src])
         time.sleep(1)
         for i in ['algo_ctl', 'pkt_rate','pkt_type', 'lpf_filter', 'orientation', 'bank_ps0', 'bank_ps1']:
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i': i})
@@ -492,7 +493,9 @@ class aceinna_device():
         if self.type_name == 'MTLT305D':
             self.set_cmd('set_unit_behavior', [self.default_confi['unit_behavior'], self.default_confi['unit_behavior_rawrate'], 0, 0, self.src])
         elif self.type_name == 'OPEN335RI':
-            self.set_cmd('set_unit_behavior', [self.default_confi['unit_behavior']])
+            # self.set_cmd('set_unit_behavior', [self.default_confi['unit_behavior']])
+            self.set_cmd('set_unit_behavior', [self.default_confi['unit_behavior'], self.default_confi['unit_behavior_rawrate'], 0, 0, self.src])
+
         time.sleep(1)
         if pwr_rst: # check whether support sw-reboot or not
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name, 'i':'will power reset'})

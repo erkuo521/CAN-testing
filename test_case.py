@@ -256,7 +256,7 @@ class aceinna_test_case():
         if self.dev.type_name == 'OPEN335RI':# for 335RI not automatical send addr msg, only send one time after power on, so save and restart unit.
             self.dev.set_to_default(pwr_rst = True)
         feedback = self.dev.get_payload_auto(auto_name = 'addr')
-        measure_data = "{0}".format(feedback)
+        measure_data = "0x{0}".format(feedback)
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return target_data in measure_data
 
@@ -950,6 +950,8 @@ class aceinna_test_case():
     def set_algo_ctl(self, target_data, saved_rst = False, nosaved_rst = False): # 4.2.10 5.1.8 5.2.8 Check last 6 bytes is same as set value
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         # data = [0x0, 0xE8, 0x03, 0xE8, 0x03, 0x14, 0x0]   #enable raw rate in unit behavior
+        self.dev.set_to_default()
+        time.sleep(3)
         data = [int(target_data[x:x+2], 16) for x in range(0,13,2)]
         self.dev.set_cmd('set_algo_ctl', data)
         time.sleep(0.2)
@@ -962,8 +964,9 @@ class aceinna_test_case():
                 time.sleep(4)
                 self.dev.auto_power.power_on()
             else:
-                while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
-                    pass
+                self.dev.set_cmd('algo_rst', [2]) # no save reset
+                # while input('need to reset power(!!!strong recommend let unit keep power off > 3s !!!), is it finished, y/n ? ') != 'y':
+                #     pass
             time.sleep(2)  
             target_data = self.dev.default_confi['algo_ctl'] # if no save repower, target data should be update to default value
             self.dev.driver.send_wakeup_msg() 
@@ -974,6 +977,7 @@ class aceinna_test_case():
         # feedback = payload[4:6] 
         # measure_data = "0x{0}".format(feedback)     
         self.function_measure_data[sys._getframe().f_code.co_name] = payload  
+        if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':[target_data, payload]})
         return target_data[2:].upper() in payload.upper()
 
     def set_try_ps(self, newps = 0x60, pstype = None, tryidx = None): # 5.9.1-5.9.9

@@ -712,8 +712,11 @@ class aceinna_test_case():
             target_data = hex(pow(2, types_data-1))
             pkt_type_mea = self.dev.measure_pkt_type(type_num=types_data)
             self.function_measure_data[sys._getframe().f_code.co_name] = pkt_type_mea
-            return pkt_type_mea == int(target_data, 16) 
-        return int(measure_data, 16) == int(target_data, 16)
+            if pkt_type_mea != int(target_data, 16):
+                return False
+        if int(measure_data, 16) != int(target_data, 16):
+            return False
+        return True
 
     def set_lpf_filter(self, target_data, saved_rst = False, nosaved_rst = False): # 4.2.5 5.1.3 5.2.3
         '''

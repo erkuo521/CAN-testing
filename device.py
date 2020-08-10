@@ -342,7 +342,8 @@ class aceinna_device():
         time.sleep(0.2)
         self.set_cmd('set_pkt_rate', [1])
         time.sleep(0.2)
-        exist_list = [0] * type_num
+        # type_num = len(self.predefine.get("types_name")) # update pkt type numbers based on json, input type_num when use this function.
+        exist_list = [0] * type_num 
         self.empty_data_pkt()   
         idx_list = [self.get_item_json(x)['auto_id'] for x in self.predefine.get('types_name')]
         if self.debug: eval('print(k,j,slope)', {'k':sys._getframe().f_code.co_name, 'j': self.auto_msg_queue[idx_list[0]].qsize(), 'slope':'slope_exist:'})        

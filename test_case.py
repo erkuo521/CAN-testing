@@ -101,7 +101,7 @@ class aceinna_test_case():
         self.test_case.append(['', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.1', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['4.1.1', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', '0x1301060004'])
+        self.test_case.append(['4.1.1', 'test_fw_version', 'self.test_file.write([item, self.test_fw_version(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.2', 'test_pkt_rate', 'self.test_file.write([item, self.test_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.3', 'test_pkt_type', 'self.test_file.write([item, self.test_pkt_type(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.1.4', 'test_lpf', 'self.test_file.write([item, self.test_lpf(targetdata), self.function_measure_data[key]])', ''])
@@ -118,17 +118,17 @@ class aceinna_test_case():
         self.test_case.append(['4.2', '', 'self.test_file.write([item])', ''])
         self.test_case.append(['4.2.1', 'test_save_config', 'self.test_file.write([item, self.test_save_config(targetdata), self.function_measure_data[key]])', '0x010001'])
         self.test_case.append(['4.2.2', 'test_algo_rst', 'self.test_file.write([item, self.test_algo_rst(targetdata), self.function_measure_data[key]])', '0x010001'])
-        self.test_case.append(['4.2.3', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', ''])
-        self.test_case.append(['4.2.6', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata), self.function_measure_data[key]])', '0x0000'])
+        self.test_case.append(['4.2.3', 'set_pkt_rate', 'self.test_file.write([item, self.set_pkt_rate(targetdata), self.function_measure_data[key]])', '0x05'])
+        self.test_case.append(['4.2.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x0F'])
+        self.test_case.append(['4.2.5', 'set_lpf_filter', 'self.test_file.write([item, self.set_lpf_filter(targetdata), self.function_measure_data[key]])', '0x0505'])
+        self.test_case.append(['4.2.6', 'set_orientation', 'self.test_file.write([item, self.set_orientation(targetdata), self.function_measure_data[key]])', '0x0009'])
         self.test_case.append(['4.2.7', 'set_unit_behavior_new', 'self.test_file.write([item, self.set_unit_behavior_new(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.8', 'set_bank_ps1', 'self.test_file.write([item, self.set_bank_ps1(targetdata), self.function_measure_data[key]])', ''])
         self.test_case.append(['4.2.9', 'set_unit_bhr_rawrate', 'self.test_file.write([item, self.set_unit_bhr_rawrate(targetdata), self.function_measure_data[key]])', '0x01'])
         self.test_case.append(['4.2.10', 'set_algo_ctl', 'self.test_file.write([item, self.set_algo_ctl(targetdata), self.function_measure_data[key]])', '00E803E8031400'])
         self.test_case.append(['4.3', '', 'self.test_file.write([item])', ''])
-        self.test_case.append(['4.3.1', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x1F'])
-        self.test_case.append(['4.3.2', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x1F'])
+        self.test_case.append(['4.3.1', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata, type_measure=True), self.function_measure_data[key]])', '0x1F'])
+        self.test_case.append(['4.3.2', 'set_pkt_type', 'self.test_file.write([item, self.function_measure_data[key], self.function_measure_data[key]])', '0x1F'])
         self.test_case.append(['4.3.3', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x1F'])
         self.test_case.append(['4.3.4', 'set_pkt_type', 'self.test_file.write([item, self.set_pkt_type(targetdata), self.function_measure_data[key]])', '0x1F'])
         self.test_case.append(['4.3.5', 'get_acc_hr', 'self.test_file.write([item, self.get_acc_hr(targetdata), self.function_measure_data[key]])', ''])
@@ -249,7 +249,7 @@ class aceinna_test_case():
         feedback = self.dev.src
         measure_data = "{0:#x}".format(feedback)
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
-        return int(measure_data, 16) == self.dev.src
+        return int(measure_data, 16) == int(target_data, 16)
 
     def get_addr_claim(self, target_data): # 1.4
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
@@ -667,7 +667,7 @@ class aceinna_test_case():
         self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
         return int(measure_data, 16) == int(target_data, 16)
 
-    def set_pkt_type(self, target_data, saved_rst = False, nosaved_rst = False): # 4.2.4 4.3.1-4.3.4 5.1.2 5.2.2
+    def set_pkt_type(self, target_data, saved_rst = False, nosaved_rst = False, type_measure = False): # 4.2.4 4.3.1-4.3.4 5.1.2 5.2.2
         '''
         target_data: such as '0x07' '0x1F'
         '''
@@ -689,7 +689,7 @@ class aceinna_test_case():
                     pass
             time.sleep(2)
             target_data = hex(self.dev.default_confi['pkt_type']) # if no save repower, target data should be update to default value
-            self.dev.driver.send_wakeup_msg() 
+            self.dev.driver.send_wakeup_msg()
 
         payload = self.dev.request_cmd('pkt_type')
         time.sleep(0.2)
@@ -698,7 +698,7 @@ class aceinna_test_case():
             return payload        
         if self.dev.get_item_json('pkt_type')['fb_length'] == 2:
             len_fb_bytes = 2
-            feedback = payload[-(len_fb_bytes-1)*2:]   
+            feedback = payload[-(len_fb_bytes-1)*2:]
         elif self.dev.get_item_json('pkt_type')['fb_length'] == 3:
             len_fb_bytes = 3
             feedback = payload[-(len_fb_bytes-1)*2:]   
@@ -706,7 +706,13 @@ class aceinna_test_case():
         # feedback = payload[-2:]
         self.dev.set_to_default(pwr_rst = False)
         measure_data = "0x{0}".format(feedback)
-        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data  
+        self.function_measure_data[sys._getframe().f_code.co_name] = measure_data 
+        if type_measure:
+            types_data = len(self.dev.predefine.get('types_name'))
+            target_data = hex(pow(2, types_data-1))
+            pkt_type_mea = self.dev.measure_pkt_type(type_num=types_data)
+            self.function_measure_data[sys._getframe().f_code.co_name] = pkt_type_mea
+            return pkt_type_mea == int(target_data, 16) 
         return int(measure_data, 16) == int(target_data, 16)
 
     def set_lpf_filter(self, target_data, saved_rst = False, nosaved_rst = False): # 4.2.5 5.1.3 5.2.3
@@ -827,17 +833,21 @@ class aceinna_test_case():
         bit_mask = pow(2, self.dev.predefine['bits_unit_bhr']) - 1 # 0x3F for 5 bits
         return (int(measure_data, 16) & bit_mask) == enabel_bit
 
-    def set_unit_behavior_new(self, targetdata, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 #5.2.5        
+    def set_unit_behavior_new(self, targetdata, saved_rst = False, nosaved_rst = False): # 4.2.7 5.1.5 #5.2.5     
+        '''
+        target is not used, for bytes1-2 we set bit2 and bit0 to 1, to check it.
+        '''   
         self.dev.set_to_default(pwr_rst = True)
         set_unit_bhr = True
         if self.debug: eval('print(k)', {'k':sys._getframe().f_code.co_name})
         if self.test_unit_behavior(target_data = ''): # check default is right, then go on
             # set unit value to what we want
-            bit_idx = 2 # start from 0
-            enable_val = self.dev.predefine.get('unit_behavior') + pow(2, bit_idx)
-            disable_val = 0
-            if self.dev.type_name == 'MTLT305D':
-                self.dev.set_cmd('set_unit_behavior', [enable_val, 0, disable_val, 0, self.dev.src])                
+            bit_idx = 2 # start from 0, set bit2 to 1 in unit behavior byte1. not use targetdata
+            enable_val = self.dev.predefine.get('unit_behavior') + pow(2, bit_idx)  #it is unit behavior byte1    
+            bit_idx_rawrate = 0 # start from 0, set bit0 to 1 in unit behavior byte2. not use targetdata      
+            enable_val_rawrate = self.dev.predefine.get('unit_behavior_rawrate') + pow(2, bit_idx_rawrate) #it is unit behavior byte2
+            if self.dev.type_name == 'MTLT305D' or self.dev.type_name == 'OPEN335RI_NEW':
+                self.dev.set_cmd('set_unit_behavior', [enable_val, enable_val_rawrate, 0, 0, self.dev.src])                
             elif self.dev.type_name == 'OPEN335RI':
                 self.dev.set_cmd('set_unit_behavior', [enable_val])
             time.sleep(1)
@@ -857,7 +867,7 @@ class aceinna_test_case():
                 self.dev.driver.send_wakeup_msg() 
 
             # check value is as expected or not
-            if self.test_unit_behavior(target_data = hex(enable_val)) == False:
+            if self.test_unit_behavior(target_data = hex(enable_val)) == False or self.test_unit_bhr_rawrate(hex(enable_val_rawrate)) == False:
                 set_unit_bhr = False
             self.function_measure_data[sys._getframe().f_code.co_name] = self.function_measure_data.get('test_unit_behavior')  
         else:
@@ -896,11 +906,11 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         self.dev.set_to_default()
         time.sleep(3)
-        pkt_rate, pkt_type, dig_filter, ori_request = 0x60, 0x56, 0x57, 0x58
+        pkt_rate, pkt_type, dig_filter, ori_request, unit_bhr, algo_ctl = 0x60, 0x56, 0x57, 0x58, 0x59, 0x5B
         if self.dev.type_name == 'MTLT305D':
-            data = [pkt_rate, pkt_type, dig_filter, ori_request, 0, 0, 0]
+            data = [pkt_rate, pkt_type, dig_filter, ori_request, unit_bhr, algo_ctl, 0]
         if self.dev.type_name == 'OPEN335RI':
-            data = [pkt_rate, pkt_type, dig_filter, ori_request, 0, 0]
+            data = [pkt_rate, pkt_type, dig_filter, ori_request, unit_bhr, algo_ctl, 0]
         self.dev.set_cmd('set_bank_ps1', data)
         time.sleep(0.2)
         if saved_rst == True:
@@ -1115,7 +1125,7 @@ class aceinna_test_case():
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
         type_list          = [0, 1, 2, 4, 3, 7, 8, 0xB, 0xF, 0xE, 0x13, 0x16, 0x17, 0x1B, 0x1C, 0x1E, 0x1F] 
         type_set_ok        = True
-        types_data = self.dev.predefine.get('types_data')
+        types_data = len(self.dev.predefine.get('types_name'))
         for value in type_list:
             if value > (pow(2,types_data)-1): continue
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':type_set_ok})

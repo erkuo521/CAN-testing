@@ -1112,6 +1112,8 @@ class aceinna_test_case():
             if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':odr_set_ok})
             self.dev.set_cmd('set_pkt_rate', [value])   
             time.sleep(0.5)        
+            if self.test_pkt_type(target_data=hex(value)) == False:
+                odr_set_ok = False
             if actual_measure == True:
                 odr = 100/value if value != 0 else 0
                 pass_delta = 20 if value < 4 else 1

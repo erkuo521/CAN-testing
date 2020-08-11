@@ -1128,7 +1128,13 @@ class aceinna_test_case():
     def try_type_list(self, target_data, actual_measure = True): # 5.4.1-5.4.15
         # check all lpf configuration list is valid
         if self.debug: eval('print(k, i)', {'k':sys._getframe().f_code.co_name,'i':target_data})
-        type_list          = [0, 1, 2, 4, 3, 7, 8, 0xB, 0xF, 0xE, 0x13, 0x16, 0x17, 0x1B, 0x1C, 0x1E, 0x1F] 
+        if len(self.dev.predefine.get("types_name")) == 6:
+            type_list          = [0, 1, 2, 4, 7, 8, 0xB, 0xF, 0xE, 0x13, 0x16, 0x17, 0x1B, 0x1C, 0x1E, 0x1F, 0x2F, 0x3F] 
+        elif len(self.dev.predefine.get("types_name")) == 5:
+            type_list          = [0, 1, 2, 4, 7, 8, 0xB, 0xF, 0xE, 0x13, 0x16, 0x17, 0x1B, 0x1C, 0x1E, 0x1F] 
+        else:
+            type_list          = [0, 1, 2, 4, 7, 8, 0xB, 0xF, 0xE, 0x13, 0x16, 0x17, 0x1B, 0x1C, 0x1E, 0x1F] 
+            print("packet type use 5 number types")
         type_set_ok        = True
         types_data = len(self.dev.predefine.get('types_name'))
         for value in type_list:
